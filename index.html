@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THSS - TH Teacher's Science Simulator (Pixel Arcade)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&family=Press+Start+2P&display=swap');
+        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2');
+
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'DungGeunMo', 'Pretendard', monospace;
+            background-color: #080c14;
+            color: #f1f5f9;
+            image-rendering: pixelated;
+        }
+
+        .pixel-font {
+            font-family: 'DungGeunMo', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        /* Custom Pixel Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #38bdf8;
+            border-radius: 0px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+
+        /* Retro Arcade Styling Tokens */
+        .pixel-panel {
+            background: rgba(15, 23, 42, 0.9);
+            border: 3px solid #1e293b;
+            box-shadow: 4px 4px 0px #020617;
+        }
+
+        .pixel-card {
+            background: rgba(30, 41, 59, 0.85);
+            border: 2px solid #334155;
+            box-shadow: 4px 4px 0px #090d16;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .pixel-card:hover {
+            transform: translate(-2px, -2px);
+            border-color: #38bdf8;
+            box-shadow: 6px 6px 0px #020617;
+        }
+
+        .pixel-btn {
+            border: 2px solid #38bdf8;
+            box-shadow: 3px 3px 0px #000000;
+            transition: all 0.1s ease;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000000;
+        }
+
+        .pixel-btn-amber {
+            background-color: #f59e0b;
+            color: #020617;
+            border-color: #fde047;
+            box-shadow: 3px 3px 0px #000000;
+        }
+
+        .pixel-btn-amber:hover {
+            background-color: #fbbf24;
+        }
+
+        .pixel-btn-amber:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000000;
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background: rgba(2, 6, 23, 0.88);
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes floatPixel {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .animate-float {
+            animation: floatPixel 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .animate-pulse-glow {
+            animation: pulseGlow 1.5s ease-in-out infinite;
+        }
+
+        input[type=range] {
+            accent-color: #38bdf8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-400 selection:text-slate-950 pixel-font">
+
+    <!-- Arcade Navigation Header -->
+    <header class="sticky top-0 z-40 border-b-4 border-slate-800 bg-slate-900/95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Brand (Pixel Style) -->
+                <div class="flex items-center gap-3 cursor-pointer group" onclick="filterCategory('all')">
+                    <div class="w-10 h-10 rounded-lg bg-sky-500 border-2 border-sky-300 flex items-center justify-center text-slate-950 shadow-[3px_3px_0px_#000] group-hover:bg-amber-400 group-hover:border-amber-200 transition">
+                        <i class="fa-solid fa-gamepad text-xl animate-bounce"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xl tracking-wider text-amber-300 drop-shadow-[2px_2px_0px_#000]">THSS</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400">ARCADE LAB</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-medium">TH Teacher's Science Simulator</p>
+                    </div>
+                </div>
+
+                <!-- Center Search Input (Retro Style) -->
+                <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
+                    <div class="relative w-full">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
+                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="🔍 실험 검색 (이상기체, 진자, 파동...)" 
+                            class="w-full pl-9 pr-4 py-1.5 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300 placeholder-slate-500 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
+                    </div>
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-3">
+                    <!-- Admin Status / Login Toggle -->
+                    <div id="admin-status-area" class="flex items-center gap-2">
+                        <!-- Rendered via JS based on isAdmin status -->
+                    </div>
+
+                    <button onclick="openAddSimModal()" id="btn-add-sim" class="hidden flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white rounded-none border-2 border-sky-300 pixel-btn">
+                        <i class="fa-solid fa-plus-square"></i>
+                        <span class="hidden sm:inline">퀘스트 등록</span>
+                    </button>
+                    <button onclick="toggleFavoritesTab()" id="btn-fav-toggle" class="p-2 text-slate-400 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition relative pixel-btn">
+                        <i class="fa-solid fa-star text-sm"></i>
+                        <span id="fav-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-slate-950 font-bold text-[10px] rounded-none border border-slate-950 flex items-center justify-center shadow-[1px_1px_0px_#000]">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Banner (Pixel Game Theme) -->
+    <section class="relative overflow-hidden bg-slate-900 border-b-4 border-slate-800 py-8 md:py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Left Text Content -->
+                <div class="lg:col-span-7 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/10 text-amber-300 border border-amber-400/40 text-xs font-bold mb-3 shadow-[2px_2px_0px_#000]">
+                        <i class="fa-solid fa-flask-vial text-sky-400 animate-pulse"></i> TH TEACHER'S SCIENCE LAB V2.0
+                    </div>
+                    <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-wide">
+                        🕹️ 선생님과 즐기는 <br class="hidden sm:inline">
+                        <span class="text-amber-300 drop-shadow-[2px_2px_0px_#000]">인터랙티브 과학 시뮬레이션</span>
+                    </h1>
+                    <p class="mt-3 text-xs md:text-sm text-slate-300 leading-relaxed max-w-2xl">
+                        THSS 오락실에 오신 것을 환영합니다! 버튼을 누르고 파라미터를 조절하며 물리학, 화학, 지구과학의 비밀을 탐구해 보세요. ✨
+                    </p>
+
+                    <!-- Stats Counters (Arcade Score Style) -->
+                    <div class="grid grid-cols-3 gap-3 mt-6 max-w-md mx-auto lg:mx-0">
+                        <div class="pixel-panel p-2.5 text-center border-sky-500">
+                            <div class="text-lg md:text-xl font-bold text-sky-400" id="stat-count-sim">1</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🎮 등록된 시뮬레이터</div>
+                        </div>
+                        <div class="pixel-panel p-2.5 text-center border-amber-500">
+                            <div class="text-lg md:text-xl font-bold text-amber-300">4</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🧪 실험 스테이지</div>
+                        </div>
+                        <div class="pixel-panel p-2.5 text-center border-emerald-500">
+                            <div class="text-lg md:text-xl font-bold text-emerald-400">FREE</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🚀 무설치 바로 실행</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Cute Pixel Screen Stage Visual (No Stock Image) -->
+                <div class="lg:col-span-5 relative">
+                    <div class="pixel-panel p-4 bg-slate-950 border-4 border-slate-700 shadow-[6px_6px_0px_#000] relative">
+                        
+                        <!-- Arcade Screen Title Header Bar -->
+                        <div class="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-3">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-rose-500 inline-block border border-black"></span>
+                                <span class="w-3 h-3 bg-amber-400 inline-block border border-black"></span>
+                                <span class="w-3 h-3 bg-emerald-400 inline-block border border-black"></span>
+                            </div>
+                            <span class="text-[10px] text-amber-300 font-bold tracking-widest animate-pulse-glow">STAGE 01 :: READY</span>
+                        </div>
+
+                        <!-- Cute Pixel Lab Display Box -->
+                        <div class="relative bg-slate-900 border-2 border-dashed border-sky-500/50 p-6 text-center flex flex-col items-center justify-center min-h-[190px]">
+                            
+                            <!-- Bouncing Cute Icons Row -->
+                            <div class="flex items-center justify-center gap-4 text-3xl md:text-4xl my-2">
+                                <span class="animate-float" style="animation-delay: 0s;">🧪</span>
+                                <span class="animate-float text-sky-400" style="animation-delay: 0.3s;">⚛️</span>
+                                <span class="animate-float text-amber-400" style="animation-delay: 0.6s;">🕹️</span>
+                                <span class="animate-float text-purple-400" style="animation-delay: 0.9s;">👾</span>
+                                <span class="animate-float" style="animation-delay: 1.2s;">✨</span>
+                            </div>
+
+                            <p class="text-xs text-sky-300 font-bold mt-2">HIGH SCORE: 999999</p>
+                            <p class="text-[11px] text-slate-400 mt-1">PRESS START TO PLAY SIMULATION</p>
+
+                            <!-- Cute Coin Insert Banner -->
+                            <div class="mt-3 px-3 py-1 bg-amber-400 text-slate-950 text-[10px] font-bold border border-amber-200 shadow-[2px_2px_0px_#000]">
+                                🪙 INSERT COIN :: 00/99
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        <!-- Stage Filters & View Options -->
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+            
+            <!-- Category Pills (Retro Stage Selector) -->
+            <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0" id="category-pills">
+                <button onclick="filterCategory('all')" class="cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap" data-cat="all">
+                    🌟 전체 보기
+                </button>
+                <button onclick="filterCategory('thermo')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="thermo">
+                    🔥 열역학
+                </button>
+                <button onclick="filterCategory('mechanics')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-emerald-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="mechanics">
+                    ⚙️ 고전역학
+                </button>
+                <button onclick="filterCategory('waves')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-cyan-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="waves">
+                    🌊 파동/광학
+                </button>
+                <button onclick="filterCategory('electromagnetism')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-purple-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="electromagnetism">
+                    ⚡ 전자기학
+                </button>
+            </div>
+
+            <!-- Grade Level Filter -->
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <span class="text-xs text-slate-400 font-bold hidden sm:inline">난이도:</span>
+                <select id="level-filter" onchange="applyFilters()" class="bg-slate-900 border-2 border-slate-700 text-xs text-amber-300 font-bold p-2 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
+                    <option value="all">🎮 모든 난이도 (ALL STAGES)</option>
+                    <option value="middle">🌱 중학교 과정</option>
+                    <option value="high">⚔️ 고등학교 과정</option>
+                    <option value="univ">🏆 대학교/심화 과정</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Simulator Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="simulator-grid">
+            <!-- Cards rendered dynamically via JavaScript -->
+        </div>
+
+        <!-- Empty State Message -->
+        <div id="empty-state" class="hidden text-center py-16 pixel-panel border-slate-800">
+            <div class="text-4xl mb-3">👾</div>
+            <h3 class="text-sm font-bold text-slate-300">조건에 맞는 시뮬레이터가 없습니다</h3>
+            <p class="text-xs text-slate-500 mt-1">검색어나 카테고리 스테이지를 변경해 보세요.</p>
+        </div>
+
+    </main>
+
+    <!-- Full-Screen Interactive Workspace Overlay -->
+    <div id="workspace-overlay" class="fixed inset-0 z-50 bg-slate-950 hidden flex flex-col">
+        
+        <!-- Workspace Header Bar -->
+        <div class="h-14 border-b-4 border-slate-800 bg-slate-900 px-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <button onclick="closeWorkspace()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border-2 border-slate-700 pixel-btn flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> 목록으로
+                </button>
+                <div class="h-4 w-1 bg-slate-800"></div>
+                <h2 id="ws-title" class="text-sm font-bold text-amber-300 flex items-center gap-2">
+                    이상 기체 법칙 시뮬레이터
+                </h2>
+                <span id="ws-category-badge" class="text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-400">열역학</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="toggleWSFullscreen()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 border-2 border-slate-700 text-xs" title="전체 화면">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+                <button onclick="closeWorkspace()" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 border-2 border-slate-700 text-xs">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Workspace Main Grid (Simulator + Guide Side Panel) -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            
+            <!-- Simulator Render Frame Container -->
+            <div class="flex-1 bg-black relative flex items-center justify-center overflow-hidden" id="ws-frame-container">
+                <iframe id="ws-iframe" class="w-full h-full border-none" title="Simulator Workspace"></iframe>
+            </div>
+
+            <!-- Side Experiment Guide & Equations Panel -->
+            <div class="w-full lg:w-80 border-t-4 lg:border-t-0 lg:border-l-4 border-slate-800 bg-slate-900 p-4 overflow-y-auto flex flex-col gap-4">
+                
+                <div>
+                    <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-open text-sky-400"></i> 🧪 핵심 실험 원리
+                    </h3>
+                    <p id="ws-description" class="text-xs text-slate-300 leading-relaxed bg-slate-950 p-3 border-2 border-slate-800">
+                        기체의 상태 방정식 PV = nRT 원리를 입자 운동 시뮬레이션으로 확인합니다.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-root-variable text-emerald-400"></i> 📐 관련 공식
+                    </h3>
+                    <div id="ws-formula" class="text-xs font-mono bg-slate-950 p-3 border-2 border-slate-800 text-sky-300">
+                        P · V = n · R · T
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 탐구 미션
+                    </h3>
+                    <ul id="ws-guide-list" class="text-xs text-slate-300 space-y-2 list-disc list-inside">
+                        <li>등온 상태에서 부피를 줄이면 압력이 어떻게 변화하나요?</li>
+                        <li>온도가 올라갈 때 입자의 평균 속도는 어떻게 달라지나요?</li>
+                    </ul>
+                </div>
+
+                <div class="mt-auto pt-4 border-t-2 border-slate-800 text-[11px] text-slate-500 text-center font-bold">
+                    👾 THSS Interactive Learning Arcade
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Add New Simulator Modal -->
+    <div id="add-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+        <div class="pixel-panel w-full max-w-xl p-6 relative border-4 border-sky-500 shadow-[8px_8px_0px_#000]">
+            <button onclick="closeAddSimModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h2 class="text-base font-bold text-amber-300 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle text-sky-400"></i> 새 퀘스트(시뮬레이터) 등록
+            </h2>
+            <p class="text-xs text-slate-400 mb-5">
+                개발한 웹 시뮬레이션 코드(HTML/JS)를 플랫폼 라이브러리에 등록하세요.
+            </p>
+
+            <form id="add-sim-form" onsubmit="saveNewSimulator(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">시뮬레이터 제목 *</label>
+                    <input type="text" id="input-title" required placeholder="예: 단진자 운동 시뮬레이션" 
+                        class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">카테고리 분야 *</label>
+                        <select id="input-category" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-400">
+                            <option value="thermo">🔥 열역학 (Thermodynamics)</option>
+                            <option value="mechanics">⚙️ 고전역학 (Mechanics)</option>
+                            <option value="waves">🌊 파동 및 광학 (Waves)</option>
+                            <option value="electromagnetism">⚡ 전자기학 (Electromagnetism)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">권장 난이도 *</label>
+                        <select id="input-level" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-400">
+                            <option value="middle">🌱 중학교 과정</option>
+                            <option value="high">⚔️ 고등학교 과정</option>
+                            <option value="univ">🏆 대학교/심화</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">설명 및 원리 개요 *</label>
+                    <textarea id="input-desc" rows="2" required placeholder="실험 시뮬레이터의 핵심 주제와 관찰 포인트를 입력하세요." 
+                        class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">관련 수식 / 핵심 법칙</label>
+                    <input type="text" id="input-formula" placeholder="예: F = m · a" 
+                        class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">HTML 소스 코드 또는 iframe URL *</label>
+                    <textarea id="input-html" rows="4" required placeholder="<!DOCTYPE html>... 형태의 HTML 코드를 넣거나 실행 가능한 웹 URL을 입력하세요." 
+                        class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs font-mono text-emerald-300 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddSimModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border-2 border-slate-700 pixel-btn">
+                        취소
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold border-2 border-sky-200 pixel-btn shadow-[3px_3px_0px_#000]">
+                        시뮬레이터 추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+        <div class="pixel-panel w-full max-w-sm p-6 text-center border-4 border-amber-400 shadow-[8px_8px_0px_#000] relative">
+            <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="w-12 h-12 mx-auto mb-3 bg-amber-400 text-slate-950 border-2 border-amber-200 flex items-center justify-center text-2xl shadow-[3px_3px_0px_#000]">
+                🔑
+            </div>
+
+            <h2 class="text-base font-bold text-amber-300 mb-1">ADMIN ACCESS</h2>
+            <p class="text-xs text-slate-400 mb-4">관리자 암호를 입력하세요 (기본: 1234)</p>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+                <div>
+                    <input type="password" id="admin-password-input" placeholder="PASSKEY PASS" required
+                        class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-center text-amber-300 focus:outline-none focus:border-amber-400 font-mono tracking-widest shadow-[2px_2px_0px_#000]">
+                </div>
+                <div id="login-error-msg" class="text-[11px] text-rose-400 font-bold hidden">비밀번호가 일치하지 않습니다!</div>
+                <button type="submit" class="w-full py-2 pixel-btn-amber text-xs font-bold">
+                    UNLOCK ADMIN MODE
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Default Ideal Gas Simulator (Clean string escape structure)
+        const defaultSimulators = [
+            {
+                id: 'ideal-gas-sim',
+                title: '이상 기체 법칙 시뮬레이터',
+                category: 'thermo',
+                categoryName: '열역학',
+                level: 'high',
+                levelName: '고등학교',
+                badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-400',
+                icon: 'fa-solid fa-fire text-amber-400',
+                description: '기체 상태 방정식(PV = nRT)에 따른 기체 입자의 거동, 압력, 부피, 온도, 몰수 간 상관관계를 실시간 2D 입자 운동과 P-V/P-T/V-T 그래프로 탐구합니다.',
+                formula: 'P · V = n · R · T',
+                guideList: [
+                    '온도(T)를 올릴 때 입자들의 속도와 벽면 충돌 수가 어떻게 변하는지 관찰해 보세요.',
+                    '등온 모드(T 고정)에서 부피를 줄이면 압력이 어떻게 변화하나요?',
+                    '등압 모드(P 고정)로 전환 후 온도를 조절할 때 부피(V)와 P-T 그래프의 선형성을 확인해 보세요.'
+                ],
+                code: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이상 기체 법칙 시뮬레이터</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&family=Press+Start+2P&display=swap');
+        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2');
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2') format('woff2');
+            font-weight: normal; font-style: normal;
+        }
+        body { font-family: 'DungGeunMo', sans-serif; background-color: #080c14; color: #f8fafc; }
+        .pixel-font { font-family: 'DungGeunMo', monospace; letter-spacing: 0.5px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .glass-panel { background: rgba(30, 41, 59, 0.85); border: 2px solid #334155; box-shadow: 3px 3px 0px #000; }
+        input[type=range] { accent-color: #38bdf8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 md:p-6 text-slate-100">
+    <header class="max-w-7xl w-full mx-auto mb-4">
+        <div class="glass-panel rounded-none p-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-sky-500/20 text-sky-400 border border-sky-400">
+                    <i class="fa-solid fa-gamepad text-2xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="pixel-font text-xl md:text-2xl font-bold text-amber-300">이상 기체 법칙 시뮬레이터</h1>
+                    <p class="pixel-font text-[11px] text-sky-400 mt-1 flex items-center gap-1.5">
+                        <span class="inline-block w-2 h-2 bg-emerald-400 animate-ping"></span>
+                        IDEAL GAS LAW SIMULATOR [V1.0]
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-950 px-4 py-2 border border-slate-700 font-mono text-sm md:text-base">
+                <span class="text-rose-400 font-bold">P</span><span class="text-slate-400">·</span>
+                <span class="text-emerald-400 font-bold">V</span><span class="text-slate-400">=</span>
+                <span class="text-amber-400 font-bold">n</span><span class="text-slate-400">·</span>
+                <span class="text-slate-300">R</span><span class="text-slate-400">·</span>
+                <span class="text-cyan-400 font-bold">T</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1">
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            <div class="glass-panel rounded-none p-4 flex flex-col flex-1 relative overflow-hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 bg-emerald-400 animate-pulse"></span>
+                        <h2 class="text-sm font-bold text-slate-200">기체 용기 시뮬레이션 🧪</h2>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-reset-state" class="px-2.5 py-1 text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold border border-amber-300 transition pixel-btn">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> 실험 초기화
+                        </button>
+                        <button id="btn-reset-vel" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i> 속도 재설정
+                        </button>
+                        <button id="btn-toggle-pause" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            <i class="fa-solid fa-pause mr-1" id="pause-icon"></i> <span id="pause-text">일시정지</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative w-full flex-1 min-h-[340px] bg-slate-950 border-2 border-slate-800 overflow-hidden flex items-center justify-center p-2">
+                    <canvas id="gasCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                    <div class="absolute bottom-3 left-3 bg-slate-900 border border-slate-700 px-3 py-2 flex items-center gap-2">
+                        <i class="fa-solid fa-temperature-three-quarters text-cyan-400"></i>
+                        <div>
+                            <div class="text-[10px] text-slate-400 uppercase">온도 (T)</div>
+                            <div class="text-sm font-bold text-cyan-300 font-mono" id="disp-T-badge">273 K (0 °C)</div>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-slate-900 border border-slate-700 px-3 py-2 flex items-center gap-2">
+                        <i class="fa-solid fa-gauge-high text-rose-400"></i>
+                        <div>
+                            <div class="text-[10px] text-slate-400 uppercase">계산된 압력 (P)</div>
+                            <div class="text-sm font-bold text-rose-300 font-mono" id="disp-P-badge">1.00 atm</div>
+                        </div>
+                    </div>
+                    <div class="absolute top-3 right-3 bg-slate-900 text-[11px] font-mono px-2.5 py-1 border border-slate-800 text-slate-400">
+                        벽 충돌/sec: <span id="disp-collision-rate" class="text-amber-400 font-bold">0</span>
+                    </div>
+                </div>
+
+                <div class="w-full h-2 mt-2 bg-slate-800 relative">
+                    <div id="heat-bar" class="h-full w-full bg-gradient-to-r from-cyan-500 via-amber-500 to-rose-500 opacity-50"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="glass-panel p-3 border-l-4 border-l-rose-500">
+                    <div class="text-xs text-slate-400">압력 (Pressure)</div>
+                    <div class="text-lg font-bold font-mono text-rose-400 mt-1" id="stat-P">1.00 <span class="text-xs text-slate-400">atm</span></div>
+                </div>
+                <div class="glass-panel p-3 border-l-4 border-l-emerald-500">
+                    <div class="text-xs text-slate-400">부피 (Volume)</div>
+                    <div class="text-lg font-bold font-mono text-emerald-400 mt-1" id="stat-V">24.6 <span class="text-xs text-slate-400">L</span></div>
+                </div>
+                <div class="glass-panel p-3 border-l-4 border-l-amber-500">
+                    <div class="text-xs text-slate-400">몰수 (Moles)</div>
+                    <div class="text-lg font-bold font-mono text-amber-400 mt-1" id="stat-n">1.00 <span class="text-xs text-slate-400">mol</span></div>
+                </div>
+                <div class="glass-panel p-3 border-l-4 border-l-cyan-500">
+                    <div class="text-xs text-slate-400">온도 (Temperature)</div>
+                    <div class="text-lg font-bold font-mono text-cyan-400 mt-1" id="stat-T">300 <span class="text-xs text-slate-400">K</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            <div class="glass-panel p-4 md:p-5">
+                <h2 class="text-base font-bold text-slate-200 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-sky-400"></i> 변수 제어 및 상태 모드 🕹️
+                </h2>
+                <div class="mb-4">
+                    <label class="text-xs text-slate-400 mb-1.5 block">열역학 변수 고정 모드 (Locked Variable)</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button class="mode-btn active bg-sky-600 text-white p-2 font-medium border border-sky-400 transition text-center" data-mode="none">
+                            <i class="fa-solid fa-unlock mr-1"></i> 자유 탐색 (Free)
+                        </button>
+                        <button class="mode-btn bg-slate-800 text-slate-300 p-2 font-medium border border-slate-700 hover:bg-slate-700 transition text-center" data-mode="T">
+                            <i class="fa-solid fa-snowflake mr-1 text-cyan-400"></i> 등온 (T 고정)
+                        </button>
+                        <button class="mode-btn bg-slate-800 text-slate-300 p-2 font-medium border border-slate-700 hover:bg-slate-700 transition text-center" data-mode="P">
+                            <i class="fa-solid fa-compress mr-1 text-rose-400"></i> 등압 (P 고정)
+                        </button>
+                        <button class="mode-btn bg-slate-800 text-slate-300 p-2 font-medium border border-slate-700 hover:bg-slate-700 transition text-center" data-mode="V">
+                            <i class="fa-solid fa-box mr-1 text-emerald-400"></i> 등적 (V 고정)
+                        </button>
+                    </div>
+                </div>
+                <hr class="border-slate-800 my-4">
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="slider-T" class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 bg-cyan-400"></span> 온도 (T - Temperature)
+                            </label>
+                            <div class="flex items-center gap-1 text-xs font-mono font-bold text-cyan-400">
+                                <input type="number" id="input-T" min="100" max="1000" step="1" value="300" class="w-16 bg-slate-900 border border-slate-700 px-1.5 py-0.5 text-right font-mono text-cyan-400 focus:outline-none focus:border-cyan-400 disabled:opacity-50">
+                                <span>K (<span id="val-C">27</span> °C)</span>
+                            </div>
+                        </div>
+                        <input type="range" id="slider-T" min="100" max="1000" step="5" value="300" class="w-full h-2 bg-slate-800 appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="slider-V" class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 bg-emerald-400"></span> 부피 (V - Volume)
+                            </label>
+                            <div class="flex items-center gap-1 text-xs font-mono font-bold text-emerald-400">
+                                <input type="number" id="input-V" min="10" max="60" step="0.1" value="24.6" class="w-16 bg-slate-900 border border-slate-700 px-1.5 py-0.5 text-right font-mono text-emerald-400 focus:outline-none focus:border-emerald-400 disabled:opacity-50">
+                                <span>L</span>
+                            </div>
+                        </div>
+                        <input type="range" id="slider-V" min="10" max="60" step="0.5" value="24.6" class="w-full h-2 bg-slate-800 appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="slider-n" class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 bg-amber-400"></span> 몰수 (n - Amount)
+                            </label>
+                            <div class="flex items-center gap-1 text-xs font-mono font-bold text-amber-400">
+                                <input type="number" id="input-n" min="0.2" max="3.0" step="0.05" value="1.0" class="w-16 bg-slate-900 border border-slate-700 px-1.5 py-0.5 text-right font-mono text-amber-400 focus:outline-none focus:border-amber-400 disabled:opacity-50">
+                                <span>mol</span>
+                            </div>
+                        </div>
+                        <input type="range" id="slider-n" min="0.2" max="3.0" step="0.1" value="1.0" class="w-full h-2 bg-slate-800 appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="slider-P" class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 bg-rose-400"></span> 압력 (P - Pressure)
+                            </label>
+                            <div class="flex items-center gap-1 text-xs font-mono font-bold text-rose-400">
+                                <input type="number" id="input-P" min="0.2" max="5.0" step="0.05" value="1.00" class="w-16 bg-slate-900 border border-slate-700 px-1.5 py-0.5 text-right font-mono text-rose-400 focus:outline-none focus:border-rose-400 disabled:opacity-50" disabled>
+                                <span>atm</span>
+                            </div>
+                        </div>
+                        <input type="range" id="slider-P" min="0.2" max="5.0" step="0.05" value="1.00" class="w-full h-2 bg-slate-800 appearance-none cursor-pointer" disabled>
+                        <p class="text-[10px] text-slate-500 mt-0.5" id="p-slider-hint">* '등압 모드' 선택 시 직접 조절할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-purple-400"></i> <span id="chart-title-text">실시간 P-V 도표 (P vs V)</span>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <div class="flex bg-slate-900 p-0.5 border border-slate-700 text-[11px] font-mono">
+                            <button id="chart-btn-pv" class="chart-type-btn px-2 py-0.5 bg-sky-600 text-white font-bold">P-V</button>
+                            <button id="chart-btn-pt" class="chart-type-btn px-2 py-0.5 text-slate-400 hover:text-white">P-T</button>
+                            <button id="chart-btn-vt" class="chart-type-btn px-2 py-0.5 text-slate-400 hover:text-white">V-T</button>
+                        </div>
+                        <button id="btn-clear-chart" class="text-xs text-slate-400 hover:text-slate-200 underline">궤적 초기화</button>
+                    </div>
+                </div>
+                <div class="relative flex-1 min-h-[320px] md:min-h-[360px] w-full">
+                    <canvas id="pvChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const R = 0.08206;
+        let state = { T: 273, V: 22.4, n: 1.0, P: 1.00, mode: 'none' };
+        let isPaused = false, particles = [], collisionCounter = 0, displayCollisionRate = 0, lastRateUpdate = performance.now();
+        let currentChartType = 'PV';
+
+        const canvas = document.getElementById('gasCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const sliderT = document.getElementById('slider-T'), sliderV = document.getElementById('slider-V'), sliderN = document.getElementById('slider-n'), sliderP = document.getElementById('slider-P');
+        const inputT = document.getElementById('input-T'), inputV = document.getElementById('input-V'), inputN = document.getElementById('input-n'), inputP = document.getElementById('input-P');
+        const valC = document.getElementById('val-C'), statP = document.getElementById('stat-P'), statV = document.getElementById('stat-V'), statN = document.getElementById('stat-n'), statT = document.getElementById('stat-T');
+        const dispTBadge = document.getElementById('disp-T-badge'), dispPBadge = document.getElementById('disp-P-badge'), dispCollisionRate = document.getElementById('disp-collision-rate');
+        const btnTogglePause = document.getElementById('btn-toggle-pause'), btnResetVel = document.getElementById('btn-reset-vel'), btnClearChart = document.getElementById('btn-clear-chart');
+        const pSliderHint = document.getElementById('p-slider-hint'), chartTitleText = document.getElementById('chart-title-text');
+
+        const chartCtx = document.getElementById('pvChart').getContext('2d');
+        const pvChart = new Chart(chartCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    { label: '현재 상태', data: [{ x: state.V, y: state.P }], backgroundColor: '#f43f5e', pointRadius: 7, pointHoverRadius: 9, z: 10 },
+                    { label: '상태 변화 궤적', data: [], showLine: true, borderColor: '#818cf8', borderWidth: 2.5, backgroundColor: 'rgba(129, 140, 248, 0.1)', pointRadius: 3, fill: false }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: {
+                    x: { type: 'linear', position: 'bottom', title: { display: true, text: '부피 V (L)', color: '#cbd5e1', font: { size: 12, weight: 'bold' } }, grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#94a3b8', font: { size: 11 } }, min: 0, max: 70 },
+                    y: { title: { display: true, text: '압력 P (atm)', color: '#cbd5e1', font: { size: 12, weight: 'bold' } }, grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#94a3b8', font: { size: 11 } }, min: 0, max: 6 }
+                },
+                plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 12 }, boxWidth: 12 } } }
+            }
+        });
+
+        class Particle {
+            constructor(bounds) { this.radius = 4; this.resetPosition(bounds); this.resetVelocity(); }
+            resetPosition(bounds) {
+                this.x = bounds.minX + this.radius + Math.random() * (bounds.maxX - bounds.minX - 2 * this.radius);
+                this.y = bounds.minY + this.radius + Math.random() * (bounds.maxY - bounds.minY - 2 * this.radius);
+            }
+            resetVelocity() {
+                const speed = Math.sqrt(state.T) * 0.35; const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+            }
+            adjustSpeed() {
+                const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy); const targetSpeed = Math.sqrt(state.T) * 0.35;
+                if (currentSpeed > 0) { const factor = targetSpeed / currentSpeed; this.vx *= factor; this.vy *= factor; } else { this.resetVelocity(); }
+            }
+            update(bounds) {
+                this.x += this.vx; this.y += this.vy; let collided = false;
+                if (this.x - this.radius < bounds.minX) { this.x = bounds.minX + this.radius; this.vx *= -1; collided = true; }
+                else if (this.x + this.radius > bounds.maxX) { this.x = bounds.maxX - this.radius; this.vx *= -1; collided = true; }
+                if (this.y - this.radius < bounds.minY) { this.y = bounds.minY + this.radius; this.vy *= -1; collided = true; }
+                else if (this.y + this.radius > bounds.maxY) { this.y = bounds.maxY - this.radius; this.vy *= -1; collided = true; }
+                if (collided) collisionCounter++;
+            }
+            draw(ctx) {
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy); const hue = Math.max(180, Math.min(360, 240 - (speed * 12)));
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = 'hsl(' + hue + ', 85%, 60%)'; ctx.shadowBlur = 6; ctx.shadowColor = 'hsl(' + hue + ', 85%, 60%)'; ctx.fill(); ctx.shadowBlur = 0;
+            }
+        }
+
+        function getContainerBounds() {
+            const marginX = 40, width = canvas.width - marginX * 2, maxV = 60, minH = 60, maxH = canvas.height - 60;
+            const boxHeight = minH + (state.V / maxV) * (maxH - minH);
+            return { minX: marginX, maxX: marginX + width, minY: canvas.height - 20 - boxHeight, maxY: canvas.height - 20, width, height: boxHeight };
+        }
+
+        function resizeCanvas() { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
+        function syncParticlesCount() {
+            const targetCount = Math.round(state.n * 60); const bounds = getContainerBounds();
+            while (particles.length < targetCount) particles.push(new Particle(bounds));
+            while (particles.length > targetCount) particles.pop();
+        }
+        function updateParticleVelocities() { particles.forEach(p => p.adjustSpeed()); }
+
+        function updateThermodynamics(sourceVariable) {
+            if (state.mode === 'T') { state.P = (state.n * R * state.T) / state.V; }
+            else if (state.mode === 'P') { state.V = Math.max(10, Math.min(60, (state.n * R * state.T) / state.P)); }
+            else if (state.mode === 'V') { state.P = (state.n * R * state.T) / state.V; }
+            else { if (sourceVariable === 'P') state.V = Math.max(10, Math.min(60, (state.n * R * state.T) / state.P)); else state.P = (state.n * R * state.T) / state.V; }
+            updateUI(); updateChart();
+        }
+
+        function updateUI() {
+            sliderT.value = state.T; sliderV.value = state.V; sliderN.value = state.n; sliderP.value = state.P;
+            if (document.activeElement !== inputT) inputT.value = Math.round(state.T);
+            if (document.activeElement !== inputV) inputV.value = state.V.toFixed(1);
+            if (document.activeElement !== inputN) inputN.value = state.n.toFixed(2);
+            if (document.activeElement !== inputP) inputP.value = state.P.toFixed(2);
+            
+            const tempC = Math.round(state.T - 273.15);
+            valC.textContent = tempC;
+            statP.innerHTML = state.P.toFixed(2) + ' <span class="text-xs text-slate-400">atm</span>';
+            statV.innerHTML = state.V.toFixed(1) + ' <span class="text-xs text-slate-400">L</span>';
+            statN.innerHTML = state.n.toFixed(2) + ' <span class="text-xs text-slate-400">mol</span>';
+            statT.innerHTML = Math.round(state.T) + ' <span class="text-xs text-slate-400">K (' + tempC + ' °C)</span>';
+            dispTBadge.textContent = Math.round(state.T) + ' K (' + tempC + ' °C)'; 
+            dispPBadge.textContent = state.P.toFixed(2) + ' atm';
+
+            sliderT.disabled = inputT.disabled = (state.mode === 'T');
+            sliderV.disabled = inputV.disabled = (state.mode === 'V');
+            sliderP.disabled = inputP.disabled = (state.mode !== 'P');
+
+            if (state.mode === 'P') { pSliderHint.textContent = "* 등압 모드: 압력 조절 시 부피(V)가 자동 수정됩니다."; pSliderHint.classList.add('text-rose-400'); }
+            else { pSliderHint.textContent = "* '등압 모드' 선택 시 직접 조절할 수 있습니다."; pSliderHint.classList.remove('text-rose-400'); }
+            document.getElementById('heat-bar').style.opacity = Math.min(1, Math.max(0.1, state.T / 800));
+        }
+
+        function switchChartType(type) {
+            currentChartType = type;
+            document.querySelectorAll('.chart-type-btn').forEach(btn => { btn.classList.remove('bg-sky-600', 'text-white', 'font-bold'); btn.classList.add('text-slate-400'); });
+            const activeBtn = document.getElementById('chart-btn-' + type.toLowerCase());
+            if (activeBtn) { activeBtn.classList.remove('text-slate-400'); activeBtn.classList.add('bg-sky-600', 'text-white', 'font-bold'); }
+            pvChart.data.datasets[1].data = [];
+
+            if (type === 'PT') {
+                pvChart.options.scales.x.title.text = '온도 T (K)'; pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 1100;
+                pvChart.options.scales.y.title.text = '압력 P (atm)'; pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 6;
+                if (chartTitleText) chartTitleText.textContent = '실시간 P-T 도표 (P vs T)';
+            } else if (type === 'VT') {
+                pvChart.options.scales.x.title.text = '온도 T (K)'; pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 1100;
+                pvChart.options.scales.y.title.text = '부피 V (L)'; pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 70;
+                if (chartTitleText) chartTitleText.textContent = '실시간 V-T 도표 (V vs T)';
+            } else {
+                pvChart.options.scales.x.title.text = '부피 V (L)'; pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 70;
+                pvChart.options.scales.y.title.text = '압력 P (atm)'; pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 6;
+                if (chartTitleText) chartTitleText.textContent = '실시간 P-V 도표 (P vs V)';
+            }
+            updateChart();
+        }
+
+        function getChartPoint() {
+            if (currentChartType === 'PT') return { x: state.T, y: state.P };
+            if (currentChartType === 'VT') return { x: state.T, y: state.V };
+            return { x: state.V, y: state.P };
+        }
+
+        function updateChart() {
+            const pt = getChartPoint();
+            pvChart.data.datasets[0].data = [pt];
+
+            const history = pvChart.data.datasets[1].data;
+            const last = history[history.length - 1];
+
+            const thresholdX = (currentChartType === 'PT' || currentChartType === 'VT') ? 5 : 0.3;
+            const thresholdY = (currentChartType === 'VT') ? 0.3 : 0.05;
+
+            if (!last || Math.abs(last.x - pt.x) > thresholdX || Math.abs(last.y - pt.y) > thresholdY) {
+                history.push(pt);
+                if (history.length > 50) history.shift();
+            }
+
+            pvChart.update('none');
+        }
+
+        function resetState() {
+            state = { T: 273, V: 22.4, n: 1.0, P: 1.00, mode: 'none' };
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.remove('active', 'bg-sky-600', 'text-white', 'border-sky-400');
+                b.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            });
+            const freeBtn = document.querySelector('.mode-btn[data-mode="none"]');
+            if (freeBtn) {
+                freeBtn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+                freeBtn.classList.add('active', 'bg-sky-600', 'text-white', 'border-sky-400');
+            }
+            switchChartType('PV');
+            syncParticlesCount();
+            updateParticleVelocities();
+            updateThermodynamics('reset');
+            pvChart.data.datasets[1].data = [];
+            pvChart.update();
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', () => { resizeCanvas(); syncParticlesCount(); });
+            const handleDirectInput = (inputElem, minVal, maxVal, onChangeFn) => {
+                const processInput = () => { let val = parseFloat(inputElem.value); if (isNaN(val)) return; val = Math.max(minVal, Math.min(maxVal, val)); onChangeFn(val); };
+                inputElem.addEventListener('input', processInput); inputElem.addEventListener('change', () => { processInput(); updateUI(); });
+            };
+
+            document.getElementById('btn-reset-state').addEventListener('click', resetState);
+            sliderT.addEventListener('input', (e) => { state.T = parseFloat(e.target.value); updateParticleVelocities(); updateThermodynamics('T'); });
+            handleDirectInput(inputT, 100, 1000, (val) => { state.T = val; updateParticleVelocities(); updateThermodynamics('T'); });
+            sliderV.addEventListener('input', (e) => { state.V = parseFloat(e.target.value); updateThermodynamics('V'); });
+            handleDirectInput(inputV, 10, 60, (val) => { state.V = val; updateThermodynamics('V'); });
+            sliderN.addEventListener('input', (e) => { state.n = parseFloat(e.target.value); syncParticlesCount(); updateThermodynamics('n'); });
+            handleDirectInput(inputN, 0.2, 3.0, (val) => { state.n = val; syncParticlesCount(); updateThermodynamics('n'); });
+            sliderP.addEventListener('input', (e) => { state.P = parseFloat(e.target.value); updateThermodynamics('P'); });
+            handleDirectInput(inputP, 0.2, 5.0, (val) => { state.P = val; updateThermodynamics('P'); });
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.mode-btn').forEach(b => { b.classList.remove('active', 'bg-sky-600', 'text-white', 'border-sky-400'); b.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700'); });
+                    const target = e.currentTarget; target.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700'); target.classList.add('active', 'bg-sky-600', 'text-white', 'border-sky-400');
+                    state.mode = target.dataset.mode;
+                    if (state.mode === 'P') switchChartType('PT');
+                    else if (state.mode === 'T' || state.mode === 'none') switchChartType('PV');
+                    else if (state.mode === 'V') switchChartType('PT');
+                    updateThermodynamics('mode');
+                });
+            });
+
+            document.getElementById('chart-btn-pv').addEventListener('click', () => switchChartType('PV'));
+            document.getElementById('chart-btn-pt').addEventListener('click', () => switchChartType('PT'));
+            document.getElementById('chart-btn-vt').addEventListener('click', () => switchChartType('VT'));
+
+            btnTogglePause.addEventListener('click', () => { isPaused = !isPaused; document.getElementById('pause-icon').className = isPaused ? "fa-solid fa-play mr-1" : "fa-solid fa-pause mr-1"; document.getElementById('pause-text').textContent = isPaused ? "재생" : "일시정지"; });
+            btnResetVel.addEventListener('click', () => particles.forEach(p => p.resetVelocity()));
+            btnClearChart.addEventListener('click', () => { pvChart.data.datasets[1].data = []; pvChart.update(); });
+        }
+
+        function render() {
+            const now = performance.now();
+            if (now - lastRateUpdate >= 500) { displayCollisionRate = Math.round((collisionCounter / (now - lastRateUpdate)) * 1000); dispCollisionRate.textContent = displayCollisionRate; collisionCounter = 0; lastRateUpdate = now; }
+            ctx.fillStyle = '#080c14'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const bounds = getContainerBounds();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fillRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bounds.minX, bounds.minY); ctx.lineTo(bounds.minX, bounds.maxY); ctx.lineTo(bounds.maxX, bounds.maxY); ctx.lineTo(bounds.maxX, bounds.minY); ctx.stroke();
+            ctx.fillStyle = '#f43f5e'; ctx.fillRect(bounds.minX - 4, bounds.minY - 10, bounds.width + 8, 12); ctx.strokeStyle = '#fda4af'; ctx.lineWidth = 2; ctx.strokeRect(bounds.minX - 4, bounds.minY - 10, bounds.width + 8, 12);
+            ctx.fillStyle = '#94a3b8'; ctx.fillRect(bounds.minX + bounds.width / 2 - 8, bounds.minY - 40, 16, 30);
+            particles.forEach(p => { if (!isPaused) p.update(bounds); p.draw(ctx); });
+            requestAnimationFrame(render);
+        }
+
+        window.onload = function () { resizeCanvas(); syncParticlesCount(); updateThermodynamics(); setupEventListeners(); requestAnimationFrame(render); };
+    <\/script>
+</body>
+</html>`
+            }
+        ];
+
+        let simulators = [];
+        let favorites = [];
+        let currentCategory = 'all';
+        let currentLevel = 'all';
+        let searchQuery = '';
+        
+        // Admin Auth State (Default PIN: 1234)
+        const ADMIN_PIN = "1234";
+        let isAdmin = false;
+
+        function initApp() {
+            if (sessionStorage.getItem('thss_is_admin') === 'true') {
+                isAdmin = true;
+            }
+
+            const localSims = localStorage.getItem('thss_custom_sims');
+            if (localSims) {
+                try {
+                    const parsed = JSON.parse(localSims);
+                    simulators = [...defaultSimulators, ...parsed];
+                } catch(e) {
+                    simulators = [...defaultSimulators];
+                }
+            } else {
+                simulators = [...defaultSimulators];
+            }
+
+            const localFavs = localStorage.getItem('thss_favorites');
+            if (localFavs) {
+                try { favorites = JSON.parse(localFavs); } catch(e) { favorites = []; }
+            }
+
+            updateAdminUI();
+            updateFavBadge();
+            renderSimulators();
+        }
+
+        function updateAdminUI() {
+            const adminStatusArea = document.getElementById('admin-status-area');
+            const btnAddSim = document.getElementById('btn-add-sim');
+
+            if (isAdmin) {
+                adminStatusArea.innerHTML = `
+                    <span class="text-[11px] font-bold px-2 py-1 bg-amber-400 text-slate-950 border border-amber-200 flex items-center gap-1 shadow-[2px_2px_0px_#000]">
+                        <i class="fa-solid fa-user-shield"></i> <span class="hidden sm:inline">ADMIN</span>
+                    </span>
+                    <button onclick="logoutAdmin()" class="p-1.5 text-slate-300 hover:text-rose-400 bg-slate-800 border-2 border-slate-700 transition text-xs" title="로그아웃">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                `;
+                btnAddSim.classList.remove('hidden');
+            } else {
+                adminStatusArea.innerHTML = `
+                    <button onclick="openAdminLoginModal()" class="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex items-center gap-1.5 pixel-btn">
+                        <i class="fa-solid fa-lock text-[10px]"></i> 관리자 로그인
+                    </button>
+                `;
+                btnAddSim.classList.add('hidden');
+            }
+        }
+
+        function openAdminLoginModal() {
+            document.getElementById('admin-password-input').value = '';
+            document.getElementById('login-error-msg').classList.add('hidden');
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+        }
+
+        function closeAdminLoginModal() {
+            document.getElementById('admin-login-modal').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pwd = document.getElementById('admin-password-input').value;
+            if (pwd === ADMIN_PIN) {
+                isAdmin = true;
+                sessionStorage.setItem('thss_is_admin', 'true');
+                closeAdminLoginModal();
+                updateAdminUI();
+                renderSimulators();
+            } else {
+                document.getElementById('login-error-msg').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdmin = false;
+            sessionStorage.removeItem('thss_is_admin');
+            updateAdminUI();
+            renderSimulators();
+        }
+
+        function deleteCustomSimulator(e, simId) {
+            e.stopPropagation();
+            if (!isAdmin) return;
+            
+            if (confirm('이 시뮬레이터를 포털에서 삭제하시겠습니까?')) {
+                simulators = simulators.filter(s => s.id !== simId);
+                const localSims = localStorage.getItem('thss_custom_sims');
+                if (localSims) {
+                    try {
+                        let customList = JSON.parse(localSims);
+                        customList = customList.filter(s => s.id !== simId);
+                        localStorage.setItem('thss_custom_sims', JSON.stringify(customList));
+                    } catch(err) {}
+                }
+                renderSimulators();
+            }
+        }
+
+        function renderSimulators() {
+            const grid = document.getElementById('simulator-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            let filtered = simulators.filter(s => {
+                const matchCat = (currentCategory === 'all' || s.category === currentCategory);
+                const matchLevel = (currentLevel === 'all' || s.level === currentLevel);
+                const matchSearch = searchQuery === '' || 
+                    s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    s.description.toLowerCase().includes(searchQuery.toLowerCase());
+                
+                return matchCat && matchLevel && matchSearch;
+            });
+
+            document.getElementById('stat-count-sim').textContent = simulators.length;
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filtered.forEach(sim => {
+                    const isFav = favorites.includes(sim.id);
+                    const isCustom = sim.id.startsWith('custom-sim-');
+                    const card = document.createElement('div');
+                    card.className = 'pixel-card rounded-none p-5 flex flex-col justify-between relative group';
+                    
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="text-[11px] font-bold px-2.5 py-1 rounded-none border ${sim.badgeColor} flex items-center gap-1.5 shadow-[1px_1px_0px_#000]">
+                                    <i class="${sim.icon}"></i> ${sim.categoryName}
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-300 font-bold bg-slate-900 border border-slate-700 px-2 py-0.5">${sim.levelName || '일반'}</span>
+                                    <button onclick="toggleFavorite(event, '${sim.id}')" class="text-slate-500 hover:text-amber-300 transition p-1" title="즐겨찾기">
+                                        <i class="${isFav ? 'fa-solid text-amber-300' : 'fa-regular'} fa-star text-sm"></i>
+                                    </button>
+                                    ${isAdmin && isCustom ? `
+                                        <button onclick="deleteCustomSimulator(event, '${sim.id}')" class="text-slate-500 hover:text-rose-400 transition p-1" title="시뮬레이터 삭제">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition line-clamp-1 mb-2">
+                                🎮 ${sim.title}
+                            </h3>
+                            <p class="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-4">
+                                ${sim.description}
+                            </p>
+                        </div>
+
+                        <div>
+                            ${sim.formula ? `
+                                <div class="text-[11px] font-mono bg-slate-950 border border-slate-800 px-2.5 py-1.5 text-sky-300 mb-4 truncate">
+                                    <i class="fa-solid fa-square-root-variable text-amber-300 mr-1"></i> ${sim.formula}
+                                </div>
+                            ` : ''}
+                            <button onclick="launchWorkspace('${sim.id}')" class="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold border-2 border-sky-300 pixel-btn flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-play text-[10px]"></i> GAME START 🕹️
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        function launchWorkspace(simId) {
+            const sim = simulators.find(s => s.id === simId);
+            if (!sim) return;
+
+            document.getElementById('ws-title').textContent = sim.title;
+            document.getElementById('ws-category-badge').textContent = sim.categoryName;
+            document.getElementById('ws-description').textContent = sim.description;
+            document.getElementById('ws-formula').textContent = sim.formula || 'N/A';
+
+            const guideListElem = document.getElementById('ws-guide-list');
+            guideListElem.innerHTML = '';
+            if (sim.guideList && sim.guideList.length > 0) {
+                sim.guideList.forEach(g => {
+                    const li = document.createElement('li');
+                    li.textContent = g;
+                    guideListElem.appendChild(li);
+                });
+            } else {
+                guideListElem.innerHTML = '<li>변수 수치를 조절하며 시뮬레이터 결과 변화를 확인해보세요.</li>';
+            }
+
+            const iframe = document.getElementById('ws-iframe');
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(sim.code);
+            doc.close();
+
+            document.getElementById('workspace-overlay').classList.remove('hidden');
+        }
+
+        function closeWorkspace() {
+            document.getElementById('workspace-overlay').classList.add('hidden');
+            const iframe = document.getElementById('ws-iframe');
+            iframe.src = 'about:blank';
+        }
+
+        function toggleWSFullscreen() {
+            const elem = document.getElementById('workspace-overlay');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => console.log(err));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function filterCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap';
+                } else {
+                    btn.className = 'cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap';
+                }
+            });
+            renderSimulators();
+        }
+
+        function applyFilters() {
+            currentLevel = document.getElementById('level-filter').value;
+            renderSimulators();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val.trim();
+            renderSimulators();
+        }
+
+        function toggleFavorite(e, id) {
+            e.stopPropagation();
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(f => f !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('thss_favorites', JSON.stringify(favorites));
+            updateFavBadge();
+            renderSimulators();
+        }
+
+        function updateFavBadge() {
+            const badge = document.getElementById('fav-badge');
+            if (favorites.length > 0) {
+                badge.textContent = favorites.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleFavoritesTab() {
+            const btn = document.getElementById('btn-fav-toggle');
+            if (currentCategory === 'favs') {
+                filterCategory('all');
+                btn.classList.remove('border-amber-400', 'text-amber-300');
+            } else {
+                currentCategory = 'favs';
+                btn.classList.add('border-amber-400', 'text-amber-300');
+                const grid = document.getElementById('simulator-grid');
+                grid.innerHTML = '';
+                const favSims = simulators.filter(s => favorites.includes(s.id));
+                
+                if (favSims.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                } else {
+                    document.getElementById('empty-state').classList.add('hidden');
+                    renderSimulators();
+                }
+            }
+        }
+
+        function openAddSimModal() {
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function closeAddSimModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+        }
+
+        function saveNewSimulator(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('input-title').value.trim();
+            const category = document.getElementById('input-category').value;
+            const level = document.getElementById('input-level').value;
+            const desc = document.getElementById('input-desc').value.trim();
+            const formula = document.getElementById('input-formula').value.trim();
+            let code = document.getElementById('input-html').value.trim();
+
+            const catNames = {
+                thermo: '열역학',
+                mechanics: '고전역학',
+                waves: '파동/광학',
+                electromagnetism: '전자기학'
+            };
+
+            const catBadges = {
+                thermo: 'bg-amber-500/20 text-amber-300 border-amber-400',
+                mechanics: 'bg-emerald-500/20 text-emerald-400 border-emerald-400',
+                waves: 'bg-cyan-500/20 text-cyan-300 border-cyan-400',
+                electromagnetism: 'bg-purple-500/20 text-purple-400 border-purple-400'
+            };
+
+            const levelNames = {
+                middle: '중학교',
+                high: '고등학교',
+                univ: '대학교'
+            };
+
+            if (code.startsWith('http://') || code.startsWith('https://')) {
+                code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>html,body,iframe{width:100%;height:100%;margin:0;padding:0;border:none;overflow:hidden;}</style></head><body><iframe src="${code}"></iframe></body></html>`;
+            }
+
+            const newSim = {
+                id: 'custom-sim-' + Date.now(),
+                title: title,
+                category: category,
+                categoryName: catNames[category] || '기타',
+                level: level,
+                levelName: levelNames[level] || '일반',
+                badgeColor: catBadges[category] || 'bg-slate-500/20 text-slate-300 border-slate-400',
+                icon: 'fa-solid fa-gamepad text-sky-400',
+                description: desc,
+                formula: formula,
+                code: code,
+                guideList: ['등록된 사용자 정의 시뮬레이터입니다. 조절 가능한 파라미터를 테스트해 보세요.']
+            };
+
+            const localSims = localStorage.getItem('thss_custom_sims');
+            let customList = localSims ? JSON.parse(localSims) : [];
+            customList.push(newSim);
+            localStorage.setItem('thss_custom_sims', JSON.stringify(customList));
+
+            simulators.push(newSim);
+            closeAddSimModal();
+            document.getElementById('add-sim-form').reset();
+            renderSimulators();
+        }
+
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
