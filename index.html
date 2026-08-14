@@ -10,13 +10,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase Standard Script Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        window.firebaseImports = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, collection, addDoc, getDocs, onSnapshot };
+        // 전역 객체에 모듈을 담아서 일반 스크립트 영역에서 사용할 수 있게 만듭니다.
+        window.firebaseImports = { initializeApp, getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc };
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
@@ -96,6 +95,7 @@
 </head>
 <body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-400 selection:text-slate-950 pixel-font">
 
+    <!-- Arcade Navigation Header -->
     <header class="sticky top-0 z-40 border-b-4 border-slate-800 bg-slate-900/95">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -185,7 +185,7 @@
                                 <span class="animate-float text-amber-400" style="animation-delay: 0.4s;">💥</span>
                                 <span class="animate-float text-sky-400" style="animation-delay: 0.8s;">🏆</span>
                             </div>
-                            <p class="text-xs text-sky-300 font-bold mt-2">LAB & ARCADE MODE</p>
+                            <p class="text-xs text-sky-300 font-bold mt-2" id="sync-status-text">LAB & ARCADE MODE</p>
                             <p class="text-[11px] text-slate-400 mt-1">SELECT YOUR PLAY MODE BELOW</p>
                         </div>
                     </div>
@@ -273,7 +273,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fa-solid fa-book-open text-sky-400"></i> 🧪 핵심 실험/게임 원리
+                            <i class="fa-solid fa-book-open text-sky-400"></i> 🧪 핵심 원리
                         </h3>
                         <button onclick="toggleWSGuidePanel()" class="lg:hidden text-slate-400 hover:text-rose-400 text-xs font-bold">
                             <i class="fa-solid fa-xmark"></i> 닫기
@@ -303,7 +303,6 @@
         </div>
     </div>
 
-    <!-- Content Manager Modal -->
     <div id="manager-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
         <div class="pixel-panel w-full max-w-5xl h-[85vh] flex flex-col relative border-4 border-amber-500 shadow-[8px_8px_0px_#000] bg-slate-900">
             <div class="flex items-center justify-between p-4 border-b-4 border-slate-800 bg-slate-950">
@@ -321,9 +320,10 @@
             </div>
             
             <div class="flex-1 overflow-y-auto p-4">
-                <p class="text-xs text-slate-400 mb-4 bg-slate-950 p-3 border border-slate-800">
-                    💡 이곳에서 모든 시뮬레이터와 게임을 조회, 수정, 삭제할 수 있습니다. 기본 제공 콘텐츠도 자유롭게 수정 가능합니다.
-                </p>
+                <div class="text-xs text-slate-400 mb-4 bg-slate-950 p-3 border border-slate-800 flex justify-between items-center">
+                    <span>💡 이곳에서 추가/수정/삭제한 내용은 <span class="text-amber-300 font-bold">전체 사용자에게 실시간으로 반영</span>됩니다. (DB 연동 시)</span>
+                    <span id="db-status-badge" class="px-2 py-0.5 font-bold bg-slate-800 text-slate-500 border border-slate-700">DB 연결 대기중...</span>
+                </div>
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="bg-slate-950 text-slate-300 border-b-2 border-slate-700">
@@ -442,6 +442,23 @@
     <script>
         const DEFAULT_ADMIN_PIN = "1234";
 
+        // =========================================================================
+        // 🔥 파이어베이스(Firebase) 실시간 DB 연결 설정 (여기를 덮어쓰세요!)
+        // =========================================================================
+       const firebaseConfig = {
+  apiKey: "AIzaSyCIVdzSumEKJr57nIBr7vK0tVEuTRbZHTw",
+  authDomain: "thss-portal.firebaseapp.com",
+  projectId: "thss-portal",
+  storageBucket: "thss-portal.firebasestorage.app",
+  messagingSenderId: "563725223121",
+  appId: "1:563725223121:web:4e880e1d95882c7276f1f0"
+};
+
+        // Firebase 인스턴스 보관용 변수
+        let db = null;
+        let firebaseSimulators = [];
+
+        // 기본 내장 시뮬레이터 소스
         const defaultSimulators = [
             {
                 id: 'ideal-gas-sim-default',
@@ -1240,8 +1257,6 @@
             }
         ];
 
-        let simulators = [];
-        let favorites = [];
         let currentAppMode = 'lab';
         let currentCategory = 'all';
         let currentLevel = 'all';
@@ -1258,7 +1273,41 @@
                 isAdmin = true;
             }
 
-            // 통합 로컬 스토리지 마이그레이션 로직
+            const localFavs = localStorage.getItem('thss_favorites');
+            if (localFavs) {
+                try { favorites = JSON.parse(localFavs); } catch(e) { favorites = []; }
+            }
+
+            // Firebase 연동 초기화 시도
+            initFirebase();
+
+            updateAdminUI();
+            updateFavBadge();
+            setAppMode('lab');
+        }
+
+        function initFirebase() {
+            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
+                try {
+                    const app = window.firebaseImports.initializeApp(firebaseConfig);
+                    db = window.firebaseImports.getFirestore(app);
+                    console.log("🔥 Firebase DB 연결 성공!");
+                    document.getElementById('db-status-badge').textContent = '🟢 실시간 클라우드 DB 연동 중';
+                    document.getElementById('db-status-badge').classList.replace('text-slate-500', 'text-emerald-400');
+                    document.getElementById('sync-status-text').textContent = 'CLOUD SYNC :: ONLINE';
+                    document.getElementById('sync-status-text').classList.replace('text-amber-300', 'text-emerald-400');
+                    listenToSimulators(); // 실시간 데이터 동기화 시작
+                } catch(e) {
+                    console.error("Firebase 초기화 에러:", e);
+                    fallbackToLocal();
+                }
+            } else {
+                console.log("⚠️ Firebase 설정이 없습니다. 로컬(내 컴퓨터) 저장소 모드로 작동합니다.");
+                fallbackToLocal();
+            }
+        }
+
+        function fallbackToLocal() {
             let allSims = localStorage.getItem('thss_all_sims');
             if (!allSims) {
                 let legacyCustom = localStorage.getItem('thss_custom_sims');
@@ -1268,15 +1317,41 @@
             } else {
                 simulators = JSON.parse(allSims);
             }
-
-            const localFavs = localStorage.getItem('thss_favorites');
-            if (localFavs) {
-                try { favorites = JSON.parse(localFavs); } catch(e) { favorites = []; }
+            renderSimulators();
+            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
+                renderManagerTable();
             }
+        }
 
-            updateAdminUI();
-            updateFavBadge();
-            setAppMode('lab');
+        // DB 실시간 동기화 수신 (Firebase용)
+        function listenToSimulators() {
+            const colRef = window.firebaseImports.collection(db, 'simulators');
+            window.firebaseImports.onSnapshot(colRef, (snapshot) => {
+                firebaseSimulators = [];
+                snapshot.forEach(doc => {
+                    firebaseSimulators.push(doc.data());
+                });
+                mergeSimulators();
+            });
+        }
+
+        function mergeSimulators() {
+            // defaultSimulators와 firebaseSimulators(커스텀 및 수정된 기본값) 병합
+            let merged = [...defaultSimulators];
+            firebaseSimulators.forEach(fSim => {
+                const existingIdx = merged.findIndex(s => s.id === fSim.id);
+                if (existingIdx !== -1) {
+                    merged[existingIdx] = fSim; // 기본값 덮어쓰기
+                } else {
+                    merged.push(fSim); // 새 퀘스트 추가
+                }
+            });
+            simulators = merged;
+            
+            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
+                renderManagerTable();
+            }
+            renderSimulators();
         }
 
         function updateAdminUI() {
@@ -1352,16 +1427,12 @@
                 document.getElementById('pin-change-success-msg').classList.add('hidden');
                 return;
             }
-
             if (!newPin) return;
 
             localStorage.setItem('thss_admin_pin', newPin);
             document.getElementById('pin-change-error-msg').classList.add('hidden');
             document.getElementById('pin-change-success-msg').classList.remove('hidden');
-            
-            setTimeout(() => {
-                closeChangePinModal();
-            }, 1000);
+            setTimeout(() => { closeChangePinModal(); }, 1000);
         }
 
         function logoutAdmin() {
@@ -1438,15 +1509,6 @@
             openAddEditSimModal(true);
         }
 
-        function deleteSimulatorFromManager(id) {
-            if (confirm('이 콘텐츠를 정말 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.')) {
-                simulators = simulators.filter(s => s.id !== id);
-                localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
-                renderManagerTable();
-                renderSimulators();
-            }
-        }
-
         function saveSimulatorData(e) {
             e.preventDefault();
 
@@ -1475,23 +1537,25 @@
             const prefix = appMode === 'arcade' ? '[ARCADE]' : '[LAB]';
             const finalTitle = `${prefix} ${titleInput.replace(/^\[.*?\]\s*/, '')}`;
 
+            let targetSim = null;
+
             if (editId) {
-                let sim = simulators.find(s => s.id === editId);
-                if (sim) {
-                    sim.appMode = appMode;
-                    sim.title = finalTitle;
-                    sim.category = category;
-                    sim.categoryName = catNames[category];
-                    sim.level = level;
-                    sim.levelName = levelNames[level];
-                    sim.badgeColor = catBadges[category];
-                    sim.icon = appMode === 'arcade' ? 'fa-solid fa-gamepad text-sky-400' : 'fa-solid fa-flask text-sky-400';
-                    sim.description = desc;
-                    sim.formula = formula;
-                    sim.code = code;
+                targetSim = simulators.find(s => s.id === editId);
+                if (targetSim) {
+                    targetSim.appMode = appMode;
+                    targetSim.title = finalTitle;
+                    targetSim.category = category;
+                    targetSim.categoryName = catNames[category];
+                    targetSim.level = level;
+                    targetSim.levelName = levelNames[level];
+                    targetSim.badgeColor = catBadges[category];
+                    targetSim.icon = appMode === 'arcade' ? 'fa-solid fa-gamepad text-sky-400' : 'fa-solid fa-flask text-sky-400';
+                    targetSim.description = desc;
+                    targetSim.formula = formula;
+                    targetSim.code = code;
                 }
             } else {
-                const newSim = {
+                targetSim = {
                     id: 'custom-sim-' + Date.now(),
                     appMode: appMode,
                     title: finalTitle,
@@ -1506,16 +1570,56 @@
                     code: code,
                     guideList: ['등록된 사용자 정의 콘텐츠입니다.']
                 };
-                simulators.push(newSim);
             }
 
-            localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
-            closeAddEditSimModal();
-            
-            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
-                renderManagerTable();
+            if (!targetSim) return;
+
+            // 저장 처리 (DB or 로컬)
+            if (db) {
+                // Firebase Firestore에 저장 (실시간 동기화 트리거됨)
+                window.firebaseImports.setDoc(window.firebaseImports.doc(db, "simulators", targetSim.id), targetSim)
+                    .then(() => {
+                        console.log("🔥 DB에 콘텐츠 저장 완료!");
+                        closeAddEditSimModal();
+                    })
+                    .catch((error) => {
+                        console.error("DB 저장 에러: ", error);
+                        alert("데이터베이스 저장 중 오류가 발생했습니다.");
+                    });
+            } else {
+                // 로컬 저장소에 저장
+                if (!editId) {
+                    simulators.push(targetSim);
+                }
+                localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
+                closeAddEditSimModal();
+                if (!document.getElementById('manager-modal').classList.contains('hidden')) {
+                    renderManagerTable();
+                }
+                renderSimulators();
             }
-            renderSimulators();
+        }
+
+        function deleteSimulatorFromManager(id) {
+            if (confirm('이 콘텐츠를 정말 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.')) {
+                if (db) {
+                    // Firebase Firestore에서 삭제
+                    window.firebaseImports.deleteDoc(window.firebaseImports.doc(db, "simulators", id))
+                        .then(() => {
+                            console.log("🔥 DB에서 삭제 완료!");
+                        })
+                        .catch((error) => {
+                            console.error("DB 삭제 에러: ", error);
+                            alert("삭제 중 오류가 발생했습니다.");
+                        });
+                } else {
+                    // 로컬 삭제
+                    simulators = simulators.filter(s => s.id !== id);
+                    localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
+                    renderManagerTable();
+                    renderSimulators();
+                }
+            }
         }
 
         function setAppMode(mode) {
