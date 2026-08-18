@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THSS 포털 - TH Teacher's Science Simulator</title>
+    <title>THSS COSMIC LAB - 우주 탐방 과학 포털</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK (Module) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 전역 객체에 모듈을 담아서 일반 스크립트 영역에서 사용할 수 있게 만듭니다.
+        // 전역 객체로 모듈 내보내기
         window.firebaseImports = { initializeApp, getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc };
     </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
         @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2');
@@ -29,35 +32,42 @@
 
         body {
             font-family: 'DungGeunMo', 'Pretendard', monospace;
-            background-color: #080c14;
-            color: #f1f5f9;
+            background-color: #030712;
+            color: #f3f4f6;
             image-rendering: pixelated;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, #38bdf8, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 90px 40px, #f59e0b, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, #a855f7, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
         }
 
         .pixel-font { font-family: 'DungGeunMo', monospace; letter-spacing: 0.5px; }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
         ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 0px; }
         ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
 
-        .pixel-panel {
-            background: rgba(15, 23, 42, 0.9);
+        .space-panel {
+            background: rgba(11, 15, 25, 0.92);
             border: 3px solid #1e293b;
-            box-shadow: 4px 4px 0px #020617;
+            box-shadow: 4px 4px 0px #000000;
         }
 
-        .pixel-card {
-            background: rgba(30, 41, 59, 0.85);
-            border: 2px solid #334155;
-            box-shadow: 4px 4px 0px #090d16;
+        .space-card {
+            background: rgba(17, 24, 39, 0.88);
+            border: 2px solid #374151;
+            box-shadow: 4px 4px 0px #030712;
             transition: all 0.15s ease-in-out;
         }
 
-        .pixel-card:hover {
-            transform: translate(-2px, -2px);
+        .space-card:hover {
+            transform: translate(-3px, -3px);
             border-color: #38bdf8;
-            box-shadow: 6px 6px 0px #020617;
+            box-shadow: 7px 7px 0px #000000;
         }
 
         .pixel-btn {
@@ -81,53 +91,76 @@
         .pixel-btn-amber:hover { background-color: #fbbf24; }
 
         .modal-backdrop {
-            background: rgba(2, 6, 23, 0.88);
-            backdrop-filter: blur(4px);
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(6px);
         }
 
-        @keyframes floatPixel {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
+        @keyframes floatSpace {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(3deg); }
         }
 
-        .animate-float { animation: floatPixel 2.5s ease-in-out infinite; }
+        .animate-float { animation: floatSpace 3.5s ease-in-out infinite; }
+        
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        .neon-glow-cyan {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        
+        .neon-glow-rose {
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-400 selection:text-slate-950 pixel-font">
 
-    <!-- Arcade Navigation Header -->
-    <header class="sticky top-0 z-40 border-b-4 border-slate-800 bg-slate-900/95">
+    <!-- Cosmic Space Station Header HUD -->
+    <header class="sticky top-0 z-40 border-b-4 border-slate-800 bg-slate-900/95 backdrop-blur">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 
+                <!-- Logo & Astronaut Mission Title -->
                 <div class="flex items-center gap-3 cursor-pointer group" onclick="setAppMode(currentAppMode)">
-                    <div class="w-10 h-10 rounded-lg bg-sky-500 border-2 border-sky-300 flex items-center justify-center text-slate-950 shadow-[3px_3px_0px_#000] group-hover:bg-amber-400 group-hover:border-amber-200 transition">
-                        <i class="fa-solid fa-gamepad text-xl animate-bounce"></i>
+                    <div class="w-10 h-10 rounded-none bg-indigo-600 border-2 border-indigo-300 flex items-center justify-center text-amber-300 shadow-[3px_3px_0px_#000] group-hover:bg-amber-400 group-hover:text-slate-950 transition">
+                        <i class="fa-solid fa-user-astronaut text-xl animate-bounce"></i>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xl tracking-wider text-amber-300 drop-shadow-[2px_2px_0px_#000]">THSS</span>
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400">ARCADE LAB</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 border border-indigo-400">COSMIC V4.0</span>
                         </div>
-                        <p class="text-[11px] text-slate-400 font-medium">TH Teacher's Science Simulator</p>
+                        <p class="text-[11px] text-slate-400 font-medium">우주 탐방 과학 포털 & 아케이드</p>
                     </div>
                 </div>
 
+                <!-- Global Mission Search -->
                 <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
                     <div class="relative w-full">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
-                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="🔍 실험/미니게임 검색 (이상기체, 패닉...)" 
+                        <i class="fa-solid fa-satellite-dish absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
+                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="🔍 탐사 미션 / 우주 게임 검색 (이상기체, 블랙홀...)" 
                             class="w-full pl-9 pr-4 py-1.5 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300 placeholder-slate-500 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
                     </div>
                 </div>
 
+                <!-- Astronaut Status & Admin Control -->
                 <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 bg-slate-950 px-3 py-1 border border-slate-800 text-[11px]">
+                        <span class="text-amber-400">👩‍🚀 대원 STATUS:</span>
+                        <span class="text-emerald-400 font-bold">READY</span>
+                    </div>
+
                     <div id="admin-status-area" class="flex items-center gap-2"></div>
+
                     <button onclick="openManagerModal()" id="btn-manage-sim" class="hidden flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 border-2 border-amber-200 pixel-btn">
-                        <i class="fa-solid fa-list-check"></i>
-                        <span class="hidden sm:inline">콘텐츠 관리</span>
+                        <i class="fa-solid fa-space-shuttle"></i>
+                        <span class="hidden sm:inline">사령부 관리</span>
                     </button>
-                    <button onclick="toggleFavoritesTab()" id="btn-fav-toggle" class="p-2 text-slate-400 hover:text-amber-300 bg-slate-800 border-2 border-slate-700 transition relative pixel-btn">
+
+                    <button onclick="toggleFavoritesTab()" id="btn-fav-toggle" class="p-2 text-slate-400 hover:text-amber-300 bg-slate-800 border-2 border-slate-700 transition relative pixel-btn" title="즐겨찾기 성운">
                         <i class="fa-solid fa-star text-sm"></i>
                         <span id="fav-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-slate-950 font-bold text-[10px] border border-slate-950 flex items-center justify-center">0</span>
                     </button>
@@ -136,57 +169,62 @@
         </div>
     </header>
 
-    <section class="relative overflow-hidden bg-slate-900 border-b-4 border-slate-800 py-8 md:py-10">
+    <!-- Hero Space Banner -->
+    <section class="relative overflow-hidden bg-slate-900/90 border-b-4 border-slate-800 py-8 md:py-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 
+                <!-- Hero Left: Mission Intro -->
                 <div class="lg:col-span-7 text-center lg:text-left">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/10 text-amber-300 border border-amber-400/40 text-xs font-bold mb-3 shadow-[2px_2px_0px_#000]">
-                        <i class="fa-solid fa-flask-vial text-sky-400 animate-pulse"></i> TH TEACHER'S SCIENCE LAB V3.0
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-400/50 text-xs font-bold mb-3 shadow-[2px_2px_0px_#000]">
+                        <i class="fa-solid fa-user-astronaut text-sky-400 animate-pulse"></i> TH TEACHER'S SPACE EXPLORER
                     </div>
                     <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-wide">
-                        🕹️ 선생님과 즐기는 <br class="hidden sm:inline">
-                        <span class="text-amber-300 drop-shadow-[2px_2px_0px_#000]">과학 탐구 & 타임어택 미니게임</span>
+                        👨‍🚀 우주 대원과 떠나는 <br class="hidden sm:inline">
+                        <span class="text-amber-300 drop-shadow-[2px_2px_0px_#000]">신비한 별 탐사 & 우주 생존 게임</span>
                     </h1>
                     <p class="mt-3 text-xs md:text-sm text-slate-300 leading-relaxed max-w-2xl">
-                        개념을 확실하게 잡는 [LAB] 탐구 모드와 극한의 피지컬로 명예의 전당에 도전하는 [ARCADE] 게임 모드!
+                        우주선을 타고 신비한 별들을 탐방하며 과학 법칙을 실험하는 <span class="text-sky-300 font-bold">[행성 탐사 LAB]</span>과 <br class="hidden md:inline">
+                        우주선 수리 및 탈출 미션에 도전하는 <span class="text-rose-400 font-bold">[우주 탈출 ARCADE]</span> 모드를 선택하세요!
                     </p>
 
+                    <!-- Space Quick Counters -->
                     <div class="grid grid-cols-3 gap-3 mt-6 max-w-md mx-auto lg:mx-0">
-                        <div class="pixel-panel p-2.5 text-center border-sky-500">
+                        <div class="space-panel p-2.5 text-center border-sky-500">
                             <div class="text-lg md:text-xl font-bold text-sky-400" id="stat-count-sim">0</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🎮 코스 콘텐츠</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🪐 등록된 미션</div>
                         </div>
-                        <div class="pixel-panel p-2.5 text-center border-amber-500">
-                            <div class="text-lg md:text-xl font-bold text-amber-300">LAB</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🧪 개념 시뮬레이터</div>
+                        <div class="space-panel p-2.5 text-center border-amber-500">
+                            <div class="text-lg md:text-xl font-bold text-amber-300">EXPLORE</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🧪 행성 탐사 LAB</div>
                         </div>
-                        <div class="pixel-panel p-2.5 text-center border-emerald-500">
-                            <div class="text-lg md:text-xl font-bold text-emerald-400">ARCADE</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🥇 타임어택 챌린지</div>
+                        <div class="space-panel p-2.5 text-center border-rose-500">
+                            <div class="text-lg md:text-xl font-bold text-rose-400">SURVIVAL</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🚀 우주 탈출 ARCADE</div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Hero Right: Interactive Astronaut Cockpit Visual -->
                 <div class="lg:col-span-5 relative">
-                    <div class="pixel-panel p-4 bg-slate-950 border-4 border-slate-700 shadow-[6px_6px_0px_#000] relative">
+                    <div class="space-panel p-4 bg-slate-950 border-4 border-indigo-900 shadow-[6px_6px_0px_#000] relative">
                         <div class="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-3">
                             <div class="flex items-center gap-1.5">
                                 <span class="w-3 h-3 bg-rose-500 inline-block border border-black"></span>
                                 <span class="w-3 h-3 bg-amber-400 inline-block border border-black"></span>
                                 <span class="w-3 h-3 bg-emerald-400 inline-block border border-black"></span>
                             </div>
-                            <span class="text-[10px] text-amber-300 font-bold tracking-widest">SYSTEM :: READY</span>
+                            <span class="text-[10px] text-amber-300 font-bold tracking-widest">STATION :: ONLINE</span>
                         </div>
 
-                        <div class="relative bg-slate-900 border-2 border-dashed border-sky-500/50 p-6 text-center flex flex-col items-center justify-center min-h-[190px]">
-                            <div class="flex items-center justify-center gap-4 text-3xl md:text-4xl my-2">
-                                <span class="animate-float" style="animation-delay: 0s;">🧪</span>
-                                <span class="animate-float text-amber-400" style="animation-delay: 0.4s;">💥</span>
-                                <span class="animate-float text-sky-400" style="animation-delay: 0.8s;">🏆</span>
+                        <div class="relative bg-slate-900/90 border-2 border-dashed border-indigo-500/50 p-6 text-center flex flex-col items-center justify-center min-h-[190px]">
+                            <div class="flex items-center justify-center gap-4 text-4xl my-2">
+                                <span class="animate-float" style="animation-delay: 0s;">🪐</span>
+                                <span class="animate-float text-amber-400" style="animation-delay: 0.5s;">👩‍🚀</span>
+                                <span class="animate-float text-sky-400" style="animation-delay: 1.0s;">🚀</span>
                             </div>
-                            <p class="text-xs text-sky-300 font-bold mt-2" id="sync-status-text">LAB & ARCADE MODE</p>
-                            <p class="text-[11px] text-slate-400 mt-1">SELECT YOUR PLAY MODE BELOW</p>
+                            <p class="text-xs text-sky-300 font-bold mt-2" id="sync-status-text">COSMIC NETWORK READY</p>
+                            <p class="text-[11px] text-slate-400 mt-1">SELECT MISSION MODE BELOW</p>
                         </div>
                     </div>
                 </div>
@@ -195,55 +233,61 @@
         </div>
     </section>
 
+    <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full flex flex-col">
 
-        <!-- Master Mode Switcher -->
+        <!-- Master Mode Switcher (Cosmic Twin Tabs) -->
         <div class="flex justify-center mb-8">
-            <div class="bg-slate-950 p-1.5 flex rounded-none border-4 border-slate-800 shadow-[6px_6px_0px_#020617] max-w-lg w-full">
+            <div class="bg-slate-950 p-1.5 flex border-4 border-slate-800 shadow-[6px_6px_0px_#020617] max-w-xl w-full">
                 <button onclick="setAppMode('lab')" id="btn-mode-lab" class="flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-400 hover:text-amber-300">
-                    🧪 개념 탐구 LAB
+                    🪐 행성 탐사 LAB
                 </button>
                 <button onclick="setAppMode('arcade')" id="btn-mode-arcade" class="flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-400 hover:text-amber-300">
-                    🕹️ 미니게임 ARCADE
+                    🚀 우주 탈출 ARCADE
                 </button>
             </div>
         </div>
 
+        <!-- Filter Bar -->
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0" id="category-pills">
-                <button onclick="filterCategory('all')" class="cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap" data-cat="all">🌟 전체 보기</button>
-                <button onclick="filterCategory('thermo')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="thermo">🔥 열역학</button>
-                <button onclick="filterCategory('mechanics')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-emerald-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="mechanics">⚙️ 고전역학</button>
-                <button onclick="filterCategory('waves')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-cyan-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="waves">🌊 파동/광학</button>
-                <button onclick="filterCategory('electromagnetism')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-purple-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="electromagnetism">⚡ 전자기학</button>
+                <button onclick="filterCategory('all')" class="cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap" data-cat="all">🌟 전체 은하계</button>
+                <button onclick="filterCategory('thermo')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="thermo">🔥 대기/열역학</button>
+                <button onclick="filterCategory('mechanics')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-emerald-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="mechanics">⚙️ 중력/고전역학</button>
+                <button onclick="filterCategory('waves')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-cyan-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="waves">🌊 성운/파동광학</button>
+                <button onclick="filterCategory('electromagnetism')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-purple-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="electromagnetism">⚡ 자기장/전자기학</button>
             </div>
 
+            <!-- Difficulty Level Filter -->
             <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-                <span class="text-xs text-slate-400 font-bold hidden sm:inline">난이도:</span>
+                <span class="text-xs text-slate-400 font-bold hidden sm:inline">대원 난이도:</span>
                 <select id="level-filter" onchange="applyFilters()" class="bg-slate-900 border-2 border-slate-700 text-xs text-amber-300 font-bold p-2 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
-                    <option value="all">🎮 모든 난이도 (ALL)</option>
-                    <option value="middle">🌱 중학교 과정</option>
-                    <option value="high">⚔️ 고등학교 과정</option>
-                    <option value="univ">🏆 대학교/심화 과정</option>
+                    <option value="all">👨‍🚀 모든 미션 난이도 (ALL)</option>
+                    <option value="middle">🌱 견습 탐사대원 (중등)</option>
+                    <option value="high">⚔️ 정예 탐사대원 (고등)</option>
+                    <option value="univ">🏆 사령관 수준 (심화)</option>
                 </select>
             </div>
         </div>
 
+        <!-- Content Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="simulator-grid"></div>
 
-        <div id="empty-state" class="hidden text-center py-16 pixel-panel border-slate-800">
-            <div class="text-4xl mb-3">👾</div>
-            <h3 class="text-sm font-bold text-slate-300" id="empty-state-title">조건에 맞는 콘텐츠가 없습니다</h3>
-            <p class="text-xs text-slate-500 mt-1">검색어, 카테고리 필터 또는 상단의 앱 모드를 변경해 보세요.</p>
+        <!-- Empty State Container -->
+        <div id="empty-state" class="hidden text-center py-16 space-panel border-slate-800">
+            <div class="text-4xl mb-3">🛸</div>
+            <h3 class="text-sm font-bold text-slate-300" id="empty-state-title">해당하는 우주 미션이 없습니다</h3>
+            <p class="text-xs text-slate-500 mt-1">검색어나 은하계 카테고리 필터를 변경해 보세요.</p>
         </div>
 
     </main>
 
+    <!-- Space Cockpit Workspace Overlay Modal -->
     <div id="workspace-overlay" class="fixed inset-0 z-50 bg-slate-950 hidden flex flex-col">
         <div class="h-14 border-b-4 border-slate-800 bg-slate-900 px-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <button onclick="closeWorkspace()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border-2 border-slate-700 pixel-btn flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-left"></i> 목록으로
+                    <i class="fa-solid fa-arrow-left"></i> 사령부로 복귀
                 </button>
                 <div class="h-4 w-1 bg-slate-800"></div>
                 <h2 id="ws-title" class="text-sm font-bold text-amber-300 flex items-center gap-2">로딩중...</h2>
@@ -253,7 +297,7 @@
             <div class="flex items-center gap-2">
                 <button onclick="toggleWSGuidePanel()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold border-2 border-slate-700 pixel-btn flex items-center gap-1.5">
                     <i class="fa-solid fa-book-open"></i>
-                    <span class="hidden sm:inline">가이드 On/Off</span>
+                    <span class="hidden sm:inline">미션 브리핑</span>
                 </button>
                 <button onclick="toggleWSFullscreen()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 border-2 border-slate-700 text-xs">
                     <i class="fa-solid fa-expand"></i>
@@ -265,15 +309,17 @@
         </div>
 
         <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            <!-- Game / Simulator Frame Canvas -->
             <div class="flex-1 bg-black relative flex items-center justify-center overflow-hidden" id="ws-frame-container">
-                <iframe id="ws-iframe" class="w-full h-full border-none" title="Simulator Workspace"></iframe>
+                <iframe id="ws-iframe" class="w-full h-full border-none" title="Space Cockpit Simulator Workspace"></iframe>
             </div>
 
+            <!-- Space Mission Guide Sidebar -->
             <div id="ws-side-panel" class="w-full lg:w-80 border-t-4 lg:border-t-0 lg:border-l-4 border-slate-800 bg-slate-900 p-4 overflow-y-auto flex flex-col gap-4">
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fa-solid fa-book-open text-sky-400"></i> 🧪 핵심 원리
+                            <i class="fa-solid fa-compass text-sky-400"></i> 🪐 미션 개요 및 과학 원리
                         </h3>
                         <button onclick="toggleWSGuidePanel()" class="lg:hidden text-slate-400 hover:text-rose-400 text-xs font-bold">
                             <i class="fa-solid fa-xmark"></i> 닫기
@@ -284,34 +330,35 @@
 
                 <div>
                     <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-square-root-variable text-emerald-400"></i> 📐 관련 공식
+                        <i class="fa-solid fa-square-root-variable text-emerald-400"></i> 📐 적용 물리 방정식
                     </h3>
                     <div id="ws-formula" class="text-xs font-mono bg-slate-950 p-3 border-2 border-slate-800 text-sky-300">N/A</div>
                 </div>
 
                 <div>
                     <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-lightbulb text-amber-400"></i> 💡 미션 가이드
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i> 👩‍🚀 대원 수행 가이드
                     </h3>
                     <ul id="ws-guide-list" class="text-xs text-slate-300 space-y-2 list-disc list-inside"></ul>
                 </div>
 
                 <div class="mt-auto pt-4 border-t-2 border-slate-800 text-[11px] text-slate-500 text-center font-bold">
-                    👾 THSS Interactive Learning Arcade
+                    👾 THSS Space Explorer Command System
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Admin Mission Command Modal -->
     <div id="manager-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
-        <div class="pixel-panel w-full max-w-5xl h-[85vh] flex flex-col relative border-4 border-amber-500 shadow-[8px_8px_0px_#000] bg-slate-900">
+        <div class="space-panel w-full max-w-5xl h-[85vh] flex flex-col relative border-4 border-amber-500 shadow-[8px_8px_0px_#000] bg-slate-900">
             <div class="flex items-center justify-between p-4 border-b-4 border-slate-800 bg-slate-950">
                 <h2 class="text-lg font-bold text-amber-300 flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-sky-400"></i> 콘텐츠 관리 대시보드
+                    <i class="fa-solid fa-space-shuttle text-sky-400"></i> 우주 사령부 미션 대시보드
                 </h2>
                 <div class="flex items-center gap-3">
                     <button onclick="openAddEditSimModal()" class="px-4 py-1.5 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 border-2 border-sky-300 pixel-btn">
-                        <i class="fa-solid fa-plus mr-1"></i> 새 콘텐츠 추가
+                        <i class="fa-solid fa-plus mr-1"></i> 새 미션 추가
                     </button>
                     <button onclick="closeManagerModal()" class="w-8 h-8 flex items-center justify-center bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-500 border-2 border-slate-700 transition">
                         <i class="fa-solid fa-xmark text-lg"></i>
@@ -321,20 +368,20 @@
             
             <div class="flex-1 overflow-y-auto p-4">
                 <div class="text-xs text-slate-400 mb-4 bg-slate-950 p-3 border border-slate-800 flex justify-between items-center">
-                    <span>💡 이곳에서 추가/수정/삭제한 내용은 <span class="text-amber-300 font-bold">전체 사용자에게 실시간으로 반영</span>됩니다. (DB 연동 시)</span>
-                    <span id="db-status-badge" class="px-2 py-0.5 font-bold bg-slate-800 text-slate-500 border border-slate-700">DB 연결 대기중...</span>
+                    <span>💡 이곳에서 새로 추가하는 미션과 게임은 <span class="text-amber-300 font-bold">전 세계 우주 대원들에게 실시간 동기화</span>됩니다.</span>
+                    <span id="db-status-badge" class="px-2 py-0.5 font-bold bg-slate-800 text-slate-500 border border-slate-700">DB 연결 확인중...</span>
                 </div>
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="bg-slate-950 text-slate-300 border-b-2 border-slate-700">
                             <th class="p-3 font-bold w-24">모드</th>
-                            <th class="p-3 font-bold w-28">카테고리</th>
-                            <th class="p-3 font-bold">제목</th>
+                            <th class="p-3 font-bold w-28">은하계 카테고리</th>
+                            <th class="p-3 font-bold">미션 제목</th>
                             <th class="p-3 font-bold w-32 text-center">관리</th>
                         </tr>
                     </thead>
                     <tbody id="manager-table-body">
-                        <!-- Rows rendered via JS -->
+                        <!-- Dynamic Rows -->
                     </tbody>
                 </table>
             </div>
@@ -343,10 +390,10 @@
 
     <!-- Edit/Add Form Modal -->
     <div id="add-modal" class="fixed inset-0 z-50 bg-slate-950/90 hidden flex items-center justify-center p-4">
-        <div class="pixel-panel w-full max-w-2xl h-[90vh] flex flex-col relative border-4 border-sky-500 shadow-[8px_8px_0px_#000] bg-slate-900">
+        <div class="space-panel w-full max-w-2xl h-[90vh] flex flex-col relative border-4 border-sky-500 shadow-[8px_8px_0px_#000] bg-slate-900">
             <div class="flex items-center justify-between p-4 border-b-4 border-slate-800 bg-slate-950">
                 <h2 id="form-modal-title" class="text-base font-bold text-sky-400 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square"></i> 콘텐츠 에디터
+                    <i class="fa-solid fa-pen-to-square"></i> 미션 에디터
                 </h2>
                 <button onclick="closeAddEditSimModal()" class="text-slate-400 hover:text-white">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -357,44 +404,44 @@
                 <input type="hidden" id="input-edit-id">
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">콘텐츠 제목 *</label>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">미션 / 게임 제목 *</label>
                     <input type="text" id="input-title" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-white">
                 </div>
                 
                 <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">앱 모드 *</label>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">포털 모드 *</label>
                         <select id="input-appmode" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
-                            <option value="lab">🧪 개념 탐구 LAB</option>
-                            <option value="arcade">🕹️ 미니게임 ARCADE</option>
+                            <option value="lab">🪐 행성 탐사 LAB</option>
+                            <option value="arcade">🚀 우주 탈출 ARCADE</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">분야 카테고리 *</label>
                         <select id="input-category" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
-                            <option value="thermo">🔥 열역학</option>
-                            <option value="mechanics">⚙️ 고전역학</option>
-                            <option value="waves">🌊 파동/광학</option>
-                            <option value="electromagnetism">⚡ 전자기학</option>
+                            <option value="thermo">🔥 대기/열역학</option>
+                            <option value="mechanics">⚙️ 중력/고전역학</option>
+                            <option value="waves">🌊 성운/파동광학</option>
+                            <option value="electromagnetism">⚡ 자기장/전자기학</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">권장 난이도 *</label>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">대원 난이도 *</label>
                         <select id="input-level" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
-                            <option value="middle">🌱 중학교</option>
-                            <option value="high">⚔️ 고등학교</option>
-                            <option value="univ">🏆 대학교</option>
+                            <option value="middle">🌱 견습 (중등)</option>
+                            <option value="high">⚔️ 정예 (고등)</option>
+                            <option value="univ">🏆 사령관 (심화)</option>
                         </select>
                     </div>
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">설명 및 개요 *</label>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">미션 개요 및 설명 *</label>
                     <textarea id="input-desc" rows="2" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-white"></textarea>
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">관련 수식</label>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">적용 방정식/수식</label>
                     <input type="text" id="input-formula" class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300">
                 </div>
                 
@@ -413,28 +460,14 @@
 
     <!-- Admin Login / PIN Modals -->
     <div id="admin-login-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
-        <div class="pixel-panel w-full max-w-sm p-6 text-center border-4 border-amber-400 relative">
+        <div class="space-panel w-full max-w-sm p-6 text-center border-4 border-amber-400 relative">
             <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             <div class="w-12 h-12 mx-auto mb-3 bg-amber-400 text-slate-950 border-2 border-amber-200 flex items-center justify-center text-2xl">🔑</div>
-            <h2 class="text-base font-bold text-amber-300 mb-1">ADMIN ACCESS</h2>
+            <h2 class="text-base font-bold text-amber-300 mb-1">COMMANDER ACCESS</h2>
             <form onsubmit="handleAdminLogin(event)" class="space-y-3 mt-4">
                 <input type="password" id="admin-password-input" placeholder="비밀번호 입력" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-center text-amber-300 font-mono">
                 <div id="login-error-msg" class="text-[11px] text-rose-400 font-bold hidden">비밀번호가 일치하지 않습니다!</div>
-                <button type="submit" class="w-full py-2 pixel-btn-amber text-xs font-bold">UNLOCK ADMIN</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="admin-pin-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
-        <div class="pixel-panel w-full max-w-sm p-6 text-center border-4 border-amber-400 relative">
-            <button onclick="closeChangePinModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h2 class="text-base font-bold text-amber-300 mb-4">CHANGE ADMIN PIN</h2>
-            <form onsubmit="handleChangePin(event)" class="space-y-3">
-                <input type="password" id="current-pin-input" placeholder="현재 비밀번호" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-center text-amber-300 font-mono">
-                <input type="password" id="new-pin-input" placeholder="새 비밀번호" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-center text-amber-300 font-mono">
-                <div id="pin-change-error-msg" class="text-[11px] text-rose-400 font-bold hidden">비밀번호 불일치!</div>
-                <div id="pin-change-success-msg" class="text-[11px] text-emerald-400 font-bold hidden">변경되었습니다!</div>
-                <button type="submit" class="w-full py-2 pixel-btn-amber text-xs font-bold">SAVE NEW PIN</button>
+                <button type="submit" class="w-full py-2 pixel-btn-amber text-xs font-bold">UNLOCK COMMAND</button>
             </form>
         </div>
     </div>
@@ -443,820 +476,58 @@
         const DEFAULT_ADMIN_PIN = "1234";
 
         // =========================================================================
-        // 🔥 파이어베이스(Firebase) 실시간 DB 연결 설정 (여기를 덮어쓰세요!)
+        // 🔥 구글 파이어베이스(Firebase) 실시간 DB 연동 키
         // =========================================================================
-       const firebaseConfig = {
-  apiKey: "AIzaSyCIVdzSumEKJr57nIBr7vK0tVEuTRbZHTw",
-  authDomain: "thss-portal.firebaseapp.com",
-  projectId: "thss-portal",
-  storageBucket: "thss-portal.firebasestorage.app",
-  messagingSenderId: "563725223121",
-  appId: "1:563725223121:web:4e880e1d95882c7276f1f0"
-};
+        const firebaseConfig = {
+            // 발급받으신 Firebase 설정을 여기에 복사해 넣어두세요!
+        };
 
         // Firebase 인스턴스 보관용 변수
         let db = null;
         let firebaseSimulators = [];
+        let favorites = [];
 
-        // 기본 내장 시뮬레이터 소스
+        // 우주 탐방 컨셉 기본 제공 미션 플레이스홀더 데이터
         const defaultSimulators = [
             {
-                id: 'ideal-gas-sim-default',
+                id: 'planet-gas-sim-default',
                 appMode: 'lab',
-                title: '[LAB] 이상 기체 법칙 시뮬레이터 (이론 탐구)',
+                title: '🪐 [가스 행성] 기체 법칙 & 대기압 탐사',
                 category: 'thermo',
-                categoryName: '열역학',
+                categoryName: '대기/열역학',
                 level: 'high',
-                levelName: '고등학교',
+                levelName: '정예 (고등)',
                 badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-400',
-                icon: 'fa-solid fa-flask text-amber-400',
-                description: '기체 상태 방정식(PV = nRT)에 따른 기체 입자의 거동, 압력, 부피, 온도, 몰수 간 상관관계를 실시간 2D 입자 운동과 P-V/P-T/V-T/n-V 그래프로 탐구합니다.',
+                icon: 'fa-solid fa-globe text-amber-400',
+                description: '미지의 가스 거대 행성에 착륙했습니다! 기체 상태 방정식(PV = nRT)을 바탕으로 대기 입자의 운동과 압력, 온도 변동을 관측하세요.',
                 formula: 'P · V = n · R · T',
                 guideList: [
-                    '온도(T)를 올릴 때 입자들의 속도와 벽면 충돌 수가 어떻게 변하는지 관찰해 보세요.',
-                    '등온 모드(T 고정)에서 부피를 줄이면 압력이 어떻게 변화하나요?',
-                    '등압 모드(P 고정)로 전환 후 온도를 조절할 때 부피(V)와 P-T 그래프의 선형성을 확인해 보세요.'
+                    '행성의 대기 온도(T)를 조절하며 입자 충돌 속도 변화를 관찰하세요.',
+                    '부피(V)를 조절하며 기체 압력(P) 도표 궤적을 기록해보세요.'
                 ],
-                code: `<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이상 기체 법칙 시뮬레이터</title>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
-        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2');
-        @font-face {
-            font-family: 'DungGeunMo';
-            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2') format('woff2');
-            font-weight: normal; font-style: normal;
-        }
-        body { font-family: 'DungGeunMo', sans-serif; background-color: #080c14; color: #f8fafc; }
-        .glass-panel { background: rgba(30, 41, 59, 0.85); border: 2px solid #334155; box-shadow: 3px 3px 0px #000; }
-        input[type=range] { accent-color: #38bdf8; }
-        .lock-btn { transition: all 0.1s; }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col justify-between p-3 md:p-6 text-slate-100">
-    <header class="max-w-7xl w-full mx-auto mb-4">
-        <div class="glass-panel p-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="p-3 bg-sky-500/20 text-sky-400 border border-sky-400"><i class="fa-solid fa-flask text-2xl text-amber-300"></i></div>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-amber-300">[LAB] 이상 기체 법칙 시뮬레이터</h1>
-                    <p class="text-[11px] text-sky-400 mt-1">IDEAL GAS LAW SIMULATOR [V1.0]</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 bg-slate-950 px-4 py-2 border border-slate-700 font-mono text-sm md:text-base">
-                <span class="text-rose-400 font-bold">P</span><span class="text-slate-400">·</span>
-                <span class="text-emerald-400 font-bold">V</span><span class="text-slate-400">=</span>
-                <span class="text-amber-400 font-bold">n</span><span class="text-slate-400">·</span>
-                <span class="text-slate-300">R</span><span class="text-slate-400">·</span>
-                <span class="text-cyan-400 font-bold">T</span>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1">
-        <section class="lg:col-span-7 flex flex-col gap-4">
-            <div class="glass-panel p-4 flex flex-col flex-1 relative overflow-hidden">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 bg-emerald-400 animate-pulse"></span>
-                        <h2 class="text-sm font-bold text-slate-200">기체 용기 시뮬레이션 🧪</h2>
-                    </div>
-                    <div class="flex gap-2">
-                        <button id="btn-reset-state" class="px-2.5 py-1 text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold border border-amber-300 transition">초기화</button>
-                        <button id="btn-reset-vel" class="px-2.5 py-1 text-xs bg-slate-800 text-slate-300 border border-slate-700">속도 재설정</button>
-                        <button id="btn-toggle-pause" class="px-2.5 py-1 text-xs bg-slate-800 text-slate-300 border border-slate-700"><span id="pause-text">일시정지</span></button>
-                    </div>
-                </div>
-
-                <div class="relative w-full flex-1 min-h-[340px] bg-slate-950 border-2 border-slate-800 flex items-center justify-center p-2">
-                    <canvas id="gasCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-                    <div class="absolute bottom-3 left-3 bg-slate-900 border border-slate-700 px-3 py-2">
-                        <div class="text-[10px] text-slate-400">온도 (T)</div>
-                        <div class="text-sm font-bold text-cyan-300 font-mono" id="disp-T-badge">273 K (0 °C)</div>
-                    </div>
-                    <div class="absolute bottom-3 right-3 bg-slate-900 border border-slate-700 px-3 py-2">
-                        <div class="text-[10px] text-slate-400">계산된 압력 (P)</div>
-                        <div class="text-sm font-bold text-rose-300 font-mono" id="disp-P-badge">1.00 atm</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="glass-panel p-3 border-l-4 border-l-rose-500"><div class="text-xs text-slate-400">압력 (P)</div><div class="text-lg font-bold font-mono text-rose-400 mt-1" id="stat-P">1.00 atm</div></div>
-                <div class="glass-panel p-3 border-l-4 border-l-emerald-500"><div class="text-xs text-slate-400">부피 (V)</div><div class="text-lg font-bold font-mono text-emerald-400 mt-1" id="stat-V">22.4 L</div></div>
-                <div class="glass-panel p-3 border-l-4 border-l-amber-500"><div class="text-xs text-slate-400">몰수 (n)</div><div class="text-lg font-bold font-mono text-amber-400 mt-1" id="stat-n">1.00 mol</div></div>
-                <div class="glass-panel p-3 border-l-4 border-l-cyan-500"><div class="text-xs text-slate-400">온도 (T)</div><div class="text-lg font-bold font-mono text-cyan-400 mt-1" id="stat-T">273 K</div></div>
-            </div>
-        </section>
-
-        <section class="lg:col-span-5 flex flex-col gap-4">
-            <div class="glass-panel p-4">
-                <h2 class="text-base font-bold text-slate-200 mb-3">변수 제어 및 다중 고정 모드 🕹️</h2>
-                <div class="mb-4">
-                    <label class="text-xs text-slate-400 mb-1 block">변수 고정 (최대 3개)</label>
-                    <div class="grid grid-cols-4 gap-1 text-xs">
-                        <button id="lock-btn-T" onclick="toggleLock('T')" class="lock-btn p-1 bg-slate-800 border border-slate-700 text-slate-300">🔓 온도(T)</button>
-                        <button id="lock-btn-V" onclick="toggleLock('V')" class="lock-btn p-1 bg-slate-800 border border-slate-700 text-slate-300">🔓 부피(V)</button>
-                        <button id="lock-btn-n" onclick="toggleLock('n')" class="lock-btn p-1 bg-slate-800 border border-slate-700 text-slate-300">🔓 몰수(n)</button>
-                        <button id="lock-btn-P" onclick="toggleLock('P')" class="lock-btn p-1 bg-slate-800 border border-slate-700 text-slate-300">🔓 압력(P)</button>
-                    </div>
-                </div>
-                <div class="space-y-3">
-                    <div>
-                        <div class="flex justify-between text-xs text-cyan-400 font-bold mb-1"><span>온도 (T)</span><input type="number" id="input-T" value="273" class="w-16 bg-slate-900 text-right"></div>
-                        <input type="range" id="slider-T" min="100" max="1000" step="5" value="273" class="w-full">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-emerald-400 font-bold mb-1"><span>부피 (V)</span><input type="number" id="input-V" value="22.4" class="w-16 bg-slate-900 text-right"></div>
-                        <input type="range" id="slider-V" min="10" max="60" step="0.5" value="22.4" class="w-full">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-amber-400 font-bold mb-1"><span>몰수 (n)</span><input type="number" id="input-n" value="1.0" class="w-16 bg-slate-900 text-right"></div>
-                        <input type="range" id="slider-n" min="0.2" max="3.0" step="0.1" value="1.0" class="w-full">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-rose-400 font-bold mb-1"><span>압력 (P)</span><input type="number" id="input-P" value="1.00" class="w-16 bg-slate-900 text-right"></div>
-                        <input type="range" id="slider-P" min="0.2" max="5.0" step="0.05" value="1.00" class="w-full">
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-panel p-4 flex-1 flex flex-col">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xs font-bold text-slate-300" id="chart-title-text">실시간 P-V 도표</h3>
-                    <div class="flex gap-1 text-[10px]">
-                        <button id="chart-btn-pv" class="px-2 py-0.5 bg-sky-600 text-white chart-type-btn">P-V</button>
-                        <button id="chart-btn-pt" class="px-2 py-0.5 text-slate-400 chart-type-btn">P-T</button>
-                        <button id="chart-btn-vt" class="px-2 py-0.5 text-slate-400 chart-type-btn">V-T</button>
-                        <button id="chart-btn-nv" class="px-2 py-0.5 text-slate-400 chart-type-btn">n-V</button>
-                    </div>
-                </div>
-                <div class="relative flex-1 min-h-[260px] w-full">
-                    <canvas id="pvChart"></canvas>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <script>
-        const R = 0.08206;
-        let state = { T: 273, V: 22.4, n: 1.0, P: 1.00 };
-        let locks = { T: false, V: false, n: false, P: false };
-        let isPaused = false, particles = [];
-        let currentChartType = 'PV';
-
-        const canvas = document.getElementById('gasCanvas');
-        const ctx = canvas.getContext('2d');
-
-        const sliderT = document.getElementById('slider-T'), sliderV = document.getElementById('slider-V'), sliderN = document.getElementById('slider-n'), sliderP = document.getElementById('slider-P');
-        const inputT = document.getElementById('input-T'), inputV = document.getElementById('input-V'), inputN = document.getElementById('input-n'), inputP = document.getElementById('input-P');
-
-        const chartCtx = document.getElementById('pvChart').getContext('2d');
-        const pvChart = new Chart(chartCtx, {
-            type: 'scatter',
-            data: { datasets: [{ data: [{ x: state.V, y: state.P }], backgroundColor: '#f43f5e' }, { data: [], showLine: true, borderColor: '#818cf8' }] },
-            options: { responsive: true, maintainAspectRatio: false, animation: false }
-        });
-
-        class Particle {
-            constructor(bounds) { this.radius = 4; this.resetPosition(bounds); this.resetVelocity(); }
-            resetPosition(bounds) {
-                this.x = bounds.minX + this.radius + Math.random() * (bounds.maxX - bounds.minX - 2 * this.radius);
-                this.y = bounds.minY + this.radius + Math.random() * (bounds.maxY - bounds.minY - 2 * this.radius);
-            }
-            resetVelocity() {
-                const speed = Math.sqrt(state.T) * 0.35; const angle = Math.random() * Math.PI * 2;
-                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
-            }
-            update(bounds) {
-                this.x += this.vx; this.y += this.vy;
-                if (this.x - this.radius < bounds.minX) { this.x = bounds.minX + this.radius; this.vx = Math.abs(this.vx); }
-                else if (this.x + this.radius > bounds.maxX) { this.x = bounds.maxX - this.radius; this.vx = -Math.abs(this.vx); }
-                
-                if (this.y - this.radius < bounds.minY) { this.y = bounds.minY + this.radius; this.vy = Math.abs(this.vy); }
-                else if (this.y + this.radius > bounds.maxY) { this.y = bounds.maxY - this.radius; this.vy = -Math.abs(this.vy); }
-            }
-            draw(ctx) {
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = '#38bdf8'; ctx.fill();
-            }
-        }
-
-        function getContainerBounds() {
-            const marginX = 20, width = canvas.width - marginX * 2, maxV = 60;
-            const boxHeight = 60 + (state.V / maxV) * (canvas.height - 100);
-            return { minX: marginX, maxX: marginX + width, minY: canvas.height - 10 - boxHeight, maxY: canvas.height - 10, width, height: boxHeight };
-        }
-
-        function resizeCanvas() { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
-        function syncParticlesCount() {
-            const targetCount = Math.round(state.n * 50); const bounds = getContainerBounds();
-            while (particles.length < targetCount) particles.push(new Particle(bounds));
-            while (particles.length > targetCount) particles.pop();
-        }
-
-        function switchChartType(type) {
-            currentChartType = type;
-            document.querySelectorAll('.chart-type-btn').forEach(btn => {
-                btn.className = 'px-2 py-0.5 text-slate-400 hover:text-white chart-type-btn';
-            });
-            const activeBtn = document.getElementById('chart-btn-' + type.toLowerCase());
-            if (activeBtn) activeBtn.className = 'px-2 py-0.5 bg-sky-600 text-white font-bold chart-type-btn';
-
-            pvChart.data.datasets[1].data = [];
-
-            if (type === 'PT') {
-                pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 1100;
-                pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 6;
-                document.getElementById('chart-title-text').textContent = '실시간 P-T 도표';
-            } else if (type === 'VT') {
-                pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 1100;
-                pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 70;
-                document.getElementById('chart-title-text').textContent = '실시간 V-T 도표';
-            } else if (type === 'NV') {
-                pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 70;
-                pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 3.5;
-                document.getElementById('chart-title-text').textContent = '실시간 n-V 도표';
-            } else {
-                pvChart.options.scales.x.min = 0; pvChart.options.scales.x.max = 70;
-                pvChart.options.scales.y.min = 0; pvChart.options.scales.y.max = 6;
-                document.getElementById('chart-title-text').textContent = '실시간 P-V 도표';
-            }
-            updateChart();
-        }
-
-        function getChartPoint() {
-            if (currentChartType === 'PT') return { x: state.T, y: state.P };
-            if (currentChartType === 'VT') return { x: state.T, y: state.V };
-            if (currentChartType === 'NV') return { x: state.V, y: state.n };
-            return { x: state.V, y: state.P };
-        }
-
-        function updateChart() {
-            const pt = getChartPoint();
-            pvChart.data.datasets[0].data = [pt];
-            const history = pvChart.data.datasets[1].data;
-            const last = history[history.length - 1];
-
-            const thresholdX = (currentChartType === 'PT' || currentChartType === 'VT') ? 5 : 0.3;
-            const thresholdY = (currentChartType === 'VT') ? 0.3 : (currentChartType === 'NV' ? 0.05 : 0.05);
-
-            if (!last || Math.abs(last.x - pt.x) > thresholdX || Math.abs(last.y - pt.y) > thresholdY) {
-                history.push(pt);
-                if (history.length > 50) history.shift();
-            }
-            pvChart.update('none');
-        }
-
-        function toggleLock(varName) { 
-            const activeLocks = Object.values(locks).filter(Boolean).length;
-            if (!locks[varName] && activeLocks >= 3) {
-                console.log('최대 3개까지만 고정');
-                return;
-            }
-            locks[varName] = !locks[varName]; 
-            
-            if (locks.P && !locks.T) switchChartType('PT');
-            else if (locks.T && !locks.V) switchChartType('PV');
-            else if (locks.V && !locks.T) switchChartType('PT');
-
-            updateThermodynamics(varName); 
-        }
-
-        function updateThermodynamics(sourceVariable) {
-            const unlocked = ['P', 'V', 'n', 'T'].filter(v => !locks[v]);
-            if (unlocked.length > 0) {
-                let target = unlocked.find(v => v !== sourceVariable) || unlocked[0];
-                if (target === 'P') state.P = (state.n * R * state.T) / state.V;
-                else if (target === 'V') state.V = Math.max(10, Math.min(60, (state.n * R * state.T) / state.P));
-                else if (target === 'T') state.T = Math.max(100, Math.min(1000, (state.P * state.V) / (state.n * R)));
-                else if (target === 'n') state.n = Math.max(0.2, Math.min(3.0, (state.P * state.V) / (R * state.T)));
-            }
-            updateUI();
-            updateChart();
-        }
-
-        function updateUI() {
-            sliderT.value = state.T; sliderV.value = state.V; sliderN.value = state.n; sliderP.value = state.P;
-            inputT.value = Math.round(state.T); inputV.value = state.V.toFixed(1); inputN.value = state.n.toFixed(2); inputP.value = state.P.toFixed(2);
-            document.getElementById('stat-P').textContent = state.P.toFixed(2) + ' atm';
-            document.getElementById('stat-V').textContent = state.V.toFixed(1) + ' L';
-            document.getElementById('stat-n').textContent = state.n.toFixed(2) + ' mol';
-            document.getElementById('stat-T').textContent = Math.round(state.T) + ' K';
-            document.getElementById('disp-T-badge').textContent = Math.round(state.T) + ' K (' + Math.round(state.T - 273.15) + ' °C)';
-            document.getElementById('disp-P-badge').textContent = state.P.toFixed(2) + ' atm';
-
-            ['T', 'V', 'n', 'P'].forEach(v => {
-                const btn = document.getElementById('lock-btn-' + v);
-                if (btn) {
-                    if (locks[v]) {
-                        btn.className = 'lock-btn p-1 bg-rose-950/80 text-rose-300 font-bold border-2 border-rose-500 shadow-[2px_2px_0px_#000]';
-                        btn.innerHTML = '🔒 ' + (v==='T'?'온도':v==='V'?'부피':v==='n'?'몰수':'압력') + '(고정)';
-                    } else {
-                        btn.className = 'lock-btn p-1 bg-slate-800 text-slate-300 border border-slate-700';
-                        btn.innerHTML = '🔓 ' + (v==='T'?'온도':v==='V'?'부피':v==='n'?'몰수':'압력');
-                    }
-                }
-                const slider = (v==='T'?sliderT:v==='V'?sliderV:v==='n'?sliderN:sliderP);
-                const input = (v==='T'?inputT:v==='V'?inputV:v==='n'?inputN:inputP);
-                if (slider) slider.disabled = locks[v];
-                if (input) input.disabled = locks[v];
-            });
-        }
-
-        function render() {
-            ctx.fillStyle = '#080c14'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const bounds = getContainerBounds();
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fillRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
-            ctx.strokeStyle = '#38bdf8'; ctx.strokeRect(bounds.minX, bounds.minY, bounds.width, bounds.height);
-            particles.forEach(p => { if (!isPaused) p.update(bounds); p.draw(ctx); });
-            requestAnimationFrame(render);
-        }
-
-        window.onload = function () {
-            resizeCanvas(); syncParticlesCount(); updateThermodynamics();
-            
-            document.getElementById('btn-reset-state').addEventListener('click', () => {
-                state = { T: 273, V: 22.4, n: 1.0, P: 1.00 }; locks = { T: false, V: false, n: false, P: false }; switchChartType('PV'); syncParticlesCount(); updateThermodynamics('reset');
-            });
-            document.getElementById('chart-btn-pv').addEventListener('click', () => switchChartType('PV'));
-            document.getElementById('chart-btn-pt').addEventListener('click', () => switchChartType('PT'));
-            document.getElementById('chart-btn-vt').addEventListener('click', () => switchChartType('VT'));
-            document.getElementById('chart-btn-nv').addEventListener('click', () => switchChartType('NV'));
-
-            sliderT.addEventListener('input', (e) => { state.T = parseFloat(e.target.value); updateThermodynamics('T'); });
-            sliderV.addEventListener('input', (e) => { state.V = parseFloat(e.target.value); updateThermodynamics('V'); });
-            sliderN.addEventListener('input', (e) => { state.n = parseFloat(e.target.value); syncParticlesCount(); updateThermodynamics('n'); });
-            sliderP.addEventListener('input', (e) => { state.P = parseFloat(e.target.value); updateThermodynamics('P'); });
-            requestAnimationFrame(render);
-        };
-    <\/script>
-</body>
-</html>`
+                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#38bdf8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🪐 가스 행성 탐사 시뮬레이터 준비 완료</h1><p>관리자 페이지에서 실제 시뮬레이터 코드를 언제든지 등록할 수 있습니다.</p></div></body></html>`
             },
             {
-                id: 'pressure-panic-game-default',
+                id: 'space-reactor-game-default',
                 appMode: 'arcade',
-                title: '[ARCADE] 💥 압력 밸런스 패닉 (타임어택)',
+                title: '🚀 [우주선 고치기] 원자로 압력 밸런스 타임어택',
                 category: 'thermo',
-                categoryName: '열역학 게임',
+                categoryName: '우주 생존',
                 level: 'high',
-                levelName: '고등학교',
+                levelName: '정예 (고등)',
                 badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-400',
-                icon: 'fa-solid fa-bomb text-rose-400',
-                description: '파도처럼 도망가는 초록색 목표 부피(V)를 슬라이더로 쫓아가세요! 끊임없이 치솟는 온도 속에서 쿨타임이 도는 비상 쿨러를 적절히 사용해야 폭발을 막을 수 있습니다.',
+                icon: 'fa-solid fa-triangle-exclamation text-rose-400',
+                description: '우주선 엔진 원자로에 과열 경보가 울렸습니다! 요동치는 목표 압력을 향해 피스톤 슬라이더와 비상 쿨러로 압력을 방어하고 지구로 귀환하세요!',
                 formula: 'P = (n · R · T) / V',
                 guideList: [
-                    '닉네임을 입력하고 게임을 시작하세요.',
-                    '목표 압력(P)이 파도처럼 변동하여, 캔버스 안의 초록색 안전 구역도 계속 이동합니다.',
-                    '온도(T)가 자동으로 치솟습니다. 비상 가열/냉각 버튼은 사용 후 1.0초간 쿨타임이 돕니다.',
-                    '안전 구역에서 벗어나면 힘들게 모은 게이지가 깎여 나갑니다! 극한의 피지컬로 5레벨을 돌파하세요!'
+                    '도망가는 안전 구역을 피스톤 슬라이더로 추격하세요.',
+                    '비상 쿨러 버튼을 타임에 맞춰 사용하여 원자로 폭발을 막으세요.'
                 ],
-                code: `<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>압력 밸런스 패닉 타임어택</title>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
-        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2');
-        @font-face {
-            font-family: 'DungGeunMo';
-            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2') format('woff2');
-            font-weight: normal; font-style: normal;
-        }
-        body { font-family: 'DungGeunMo', sans-serif; background-color: #030712; color: #f8fafc; }
-        .pixel-card { background: rgba(15, 23, 42, 0.95); border: 3px solid #334155; box-shadow: 4px 4px 0px #000; }
-        .pixel-btn { border: 2px solid #38bdf8; box-shadow: 3px 3px 0px #000; transition: all 0.1s; }
-        .pixel-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #000; }
-        input[type=range] { accent-color: #f59e0b; }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col p-3 md:p-6 justify-between">
-    <header class="max-w-5xl w-full mx-auto mb-3">
-        <div class="pixel-card p-3 md:px-5 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-rose-500 text-slate-950 flex items-center justify-center font-bold text-xl border-2 border-rose-300">💣</div>
-                <div>
-                    <h1 class="text-base md:text-lg font-bold text-amber-300">압력 밸런스 패닉 (다이나믹 타임어택)</h1>
-                    <p class="text-[10px] text-rose-400 font-bold">CURRENT: LEVEL <span id="disp-stage-num">1</span> / 5</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1.5 bg-slate-950 px-2 py-1 border border-slate-800">
-                    <span class="text-[10px] text-slate-400 hidden sm:inline">이동:</span>
-                    <select id="stage-select-dropdown" onchange="jumpToStage(parseInt(this.value))" class="bg-slate-900 text-amber-300 font-bold text-xs p-1 border border-slate-700 focus:outline-none">
-                        <option value="0">LEVEL 1</option>
-                        <option value="1">LEVEL 2</option>
-                        <option value="2">LEVEL 3</option>
-                        <option value="3">LEVEL 4</option>
-                        <option value="4">LEVEL 5</option>
-                    </select>
-                </div>
-                <div class="bg-slate-950 px-3 py-1 border border-slate-700 font-mono text-amber-400 font-bold text-sm">
-                    ⏱️ <span id="disp-total-timer">00:00.00</span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-5xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
-        <section class="lg:col-span-7 flex flex-col gap-3">
-            <div class="pixel-card p-4 flex-1 flex flex-col justify-between relative bg-slate-950">
-                <div class="flex justify-between items-center mb-2 text-xs">
-                    <span class="text-amber-300 font-bold" id="disp-stage-title">LEVEL 1: 요동치는 파도</span>
-                    <span class="text-emerald-400 font-bold bg-emerald-900/40 border border-emerald-500/50 px-2 py-1" id="disp-target-range">실시간 목표: 2.00 atm</span>
-                </div>
-
-                <div class="relative w-full flex-1 min-h-[220px] bg-slate-900 border-2 border-slate-800 overflow-hidden flex items-center justify-center">
-                    <canvas id="gameCanvas" class="w-full h-full block"></canvas>
-                    
-                    <div class="absolute top-2 left-2 bg-slate-950/80 px-2.5 py-1 border border-slate-700 text-xs font-mono">
-                        현재 압력(P): <span id="disp-current-p" class="font-bold text-rose-400">1.00</span> atm
-                    </div>
-
-                    <div id="status-indicator" class="absolute top-2 right-2 px-2.5 py-1 text-xs font-bold bg-rose-500 text-slate-950 animate-pulse">
-                        ⚠️ 안전 구역 이탈중!
-                    </div>
-
-                    <div id="stage-banner" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center gap-2 hidden z-10">
-                        <div class="text-3xl animate-bounce">🎉</div>
-                        <div id="banner-text" class="text-base font-bold text-amber-300">LEVEL 1 CLEAR!</div>
-                        <div class="text-xs text-sky-400">다음 레벨로 진입합니다...</div>
-                    </div>
-                </div>
-
-                <div class="mt-3">
-                    <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-                        <span>진행률 (이탈 시 게이지가 천천히 감소합니다!)</span>
-                        <span id="disp-hold-percent" class="text-emerald-400 font-bold">0%</span>
-                    </div>
-                    <div class="w-full h-3 bg-slate-900 border border-slate-700 p-0.5">
-                        <div id="bar-hold-progress" class="h-full bg-emerald-400 transition-all duration-75" style="width: 0%;"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="lg:col-span-5 flex flex-col gap-3">
-            <div class="pixel-card p-4">
-                <h2 class="text-sm font-bold text-amber-300 mb-3 flex items-center gap-1">🕹️ 슬라이더 파도타기 & 쿨러 제어</h2>
-                <div class="space-y-4">
-                    <div class="bg-rose-950/30 border border-rose-500/30 p-2">
-                        <div class="flex justify-between text-[11px] text-emerald-300 mb-2">
-                            <span class="font-bold">부피 조절 (도망가는 초록색 쫓기!)</span>
-                            <span class="font-mono font-bold" id="val-v">22.4 L</span>
-                        </div>
-                        <input type="range" id="slider-game-v" min="10" max="60" step="0.2" value="22.4" class="w-full h-3 bg-slate-800 cursor-pointer">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-cool" class="relative py-2 bg-cyan-700 hover:bg-cyan-600 text-white text-xs font-bold pixel-btn overflow-hidden transition">
-                            ❄️ 비상 냉각 (-80K)
-                            <div id="cool-cd" class="absolute left-0 bottom-0 h-1 bg-cyan-300 w-0"></div>
-                        </button>
-                        <button id="btn-heat" class="relative py-2 bg-rose-700 hover:bg-rose-600 text-white text-xs font-bold pixel-btn overflow-hidden transition">
-                            🔥 순간 가열 (+80K)
-                            <div id="heat-cd" class="absolute left-0 bottom-0 h-1 bg-rose-300 w-0"></div>
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 text-[11px] font-mono bg-slate-900 p-2 border border-slate-800">
-                        <div>온도(T): <span id="val-t" class="text-cyan-300 font-bold">273 K</span> <span class="text-rose-400 animate-pulse text-[9px]">(상승중)</span></div>
-                        <div>몰수(n): <span id="val-n" class="text-amber-300 font-bold">1.00 mol</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pixel-card p-3 flex-1 flex flex-col">
-                <h3 class="text-xs font-bold text-amber-300 mb-2 flex items-center gap-1">🏆 학급 명예의 전당</h3>
-                <div class="flex-1 overflow-y-auto bg-slate-950 p-2 border border-slate-800 text-xs min-h-[120px]">
-                    <table class="w-full text-left border-collapse">
-                        <thead><tr class="text-[10px] text-slate-500 border-b border-slate-800"><th class="pb-1">순위</th><th class="pb-1">닉네임</th><th class="pb-1 text-right">기록</th></tr></thead>
-                        <tbody id="leaderboard-body" class="font-mono"><tr><td colspan="3" class="text-center py-4 text-slate-600">등록된 기록이 없습니다.</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div id="modal-start" class="fixed inset-0 bg-slate-950/95 flex items-center justify-center p-4 z-50">
-        <div class="pixel-card p-6 max-w-sm w-full text-center border-4 border-amber-400">
-            <div class="text-4xl mb-2">⏱️💥</div>
-            <h2 class="text-base font-bold text-amber-300 mb-1">압력 밸런스 패닉</h2>
-            <p class="text-xs text-slate-400 mb-4">쉴새 없이 변하는 파도 속에서 부피 슬라이더로 안전 구역을 추격하세요!</p>
-            <form onsubmit="startGameWithNickname(event)" class="space-y-3">
-                <input type="text" id="input-nickname" placeholder="학생 닉네임 입력 (예: 물리왕)" required maxlength="10" class="w-full px-3 py-2 bg-slate-900 border-2 border-slate-700 text-xs text-center text-amber-300 font-bold focus:outline-none focus:border-amber-400">
-                <button type="submit" class="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold pixel-btn">GAME START! 🕹️</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-clear" class="fixed inset-0 bg-slate-950/95 flex items-center justify-center p-4 z-50 hidden">
-        <div class="pixel-card p-6 max-w-sm w-full text-center border-4 border-emerald-400">
-            <div class="text-4xl mb-2">🏆🎉</div>
-            <h2 class="text-base font-bold text-emerald-300 mb-1">ALL LEVELS CLEAR!</h2>
-            <p class="text-xs text-slate-400 mb-2">당신의 극한 피지컬을 증명했습니다!</p>
-            <div class="my-3 p-3 bg-slate-900 border border-slate-700 font-mono">
-                <div class="text-[10px] text-slate-400">최종 타임어택 기록</div>
-                <div class="text-xl font-bold text-amber-300" id="disp-final-time">00:00.00</div>
-            </div>
-            <button onclick="restartGame()" class="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold pixel-btn">다시 도전하기 🔄</button>
-        </div>
-    </div>
-
-    <script>
-        const R = 0.08206;
-        let nickname = "GUEST";
-        let gameState = 'STOPPED';
-        let currentStageIdx = 0;
-        let totalElapsedMs = 0;
-        let stageHoldSec = 0;
-        let lastTimestamp = performance.now();
-        let isTransitioning = false;
-
-        let coolOnCooldown = false;
-        let heatOnCooldown = false;
-
-        let state = { T: 300, V: 22.4, n: 1.0, P: 1.00 };
-        let particles = [];
-
-        const stages = [
-            { num: 1, title: "LEVEL 1: 요동치는 파도", baseTargetP: 2.00, tolerance: 0.50, holdReq: 5, waveSpeed: 0.5, waveAmp: 0.4, driftT: 5, perturbRate: 0.01 },
-            { num: 2, title: "LEVEL 2: 고장난 보일러", baseTargetP: 3.00, tolerance: 0.40, holdReq: 6, waveSpeed: 0.8, waveAmp: 0.6, driftT: 10, perturbRate: 0.03 },
-            { num: 3, title: "LEVEL 3: 가스 누출 경보", baseTargetP: 1.50, tolerance: 0.35, holdReq: 8, waveSpeed: 1.2, waveAmp: 0.7, driftT: 15, perturbRate: 0.05 },
-            { num: 4, title: "LEVEL 4: 카오스 열폭주", baseTargetP: 2.50, tolerance: 0.30, holdReq: 9, waveSpeed: 1.6, waveAmp: 0.9, driftT: 20, perturbRate: 0.08 },
-            { num: 5, title: "LEVEL 5: 최종 패닉", baseTargetP: 3.50, tolerance: 0.25, holdReq: 10, waveSpeed: 2.0, waveAmp: 1.0, driftT: 25, perturbRate: 0.12 }
-        ];
-
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function resizeCanvas() { const rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
-
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < 40; i++) {
-                particles.push({
-                    x: Math.random() * (canvas.width - 80) + 40,
-                    y: Math.random() * 100 + 40,
-                    vx: (Math.random() - 0.5) * 5,
-                    vy: (Math.random() - 0.5) * 5
-                });
-            }
-        }
-
-        function startGameWithNickname(e) {
-            e.preventDefault();
-            nickname = document.getElementById('input-nickname').value.trim() || "GUEST";
-            document.getElementById('modal-start').classList.add('hidden');
-            
-            currentStageIdx = 0;
-            totalElapsedMs = 0;
-            stageHoldSec = 0;
-            gameState = 'RUNNING';
-            lastTimestamp = performance.now();
-            initStage(0);
-            initParticles();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function jumpToStage(idx) {
-            if (idx < 0 || idx >= stages.length) return;
-            initStage(idx);
-        }
-
-        function initStage(idx) {
-            currentStageIdx = idx;
-            stageHoldSec = 0;
-            isTransitioning = false;
-            const st = stages[idx];
-
-            document.getElementById('stage-select-dropdown').value = idx;
-            document.getElementById('disp-stage-num').textContent = st.num;
-            document.getElementById('disp-stage-title').textContent = st.title;
-            document.getElementById('stage-banner').classList.add('hidden');
-
-            state.T = 300;
-            state.n = 1.0;
-            st.actualTargetP = st.baseTargetP;
-            state.V = 50; 
-            document.getElementById('slider-game-v').value = state.V;
-        }
-
-        function updateGameLogic(dt) {
-            if (gameState !== 'RUNNING' || isTransitioning) return;
-
-            totalElapsedMs += dt * 1000;
-            const timeSec = totalElapsedMs / 1000;
-            const st = stages[currentStageIdx];
-
-            state.T += st.driftT * dt;
-
-            if (Math.random() < st.perturbRate) {
-                state.T += (Math.random() - 0.45) * 15;
-                state.n -= Math.random() * 0.05;
-                state.n = Math.max(0.3, Math.min(2.5, state.n));
-            }
-            state.T = Math.max(100, Math.min(2000, state.T));
-
-            st.actualTargetP = st.baseTargetP + Math.sin(timeSec * st.waveSpeed) * st.waveAmp;
-            st.actualTargetP = Math.max(0.5, st.actualTargetP);
-
-            state.P = (state.n * R * state.T) / state.V;
-
-            const isTarget = Math.abs(state.P - st.actualTargetP) <= st.tolerance;
-            const statusInd = document.getElementById('status-indicator');
-
-            if (isTarget) {
-                stageHoldSec += dt;
-                statusInd.className = "absolute top-2 right-2 px-2.5 py-1 text-xs font-bold bg-emerald-400 text-slate-950";
-                statusInd.textContent = "✅ 파도타기 완벽!";
-            } else {
-                stageHoldSec -= dt * 0.5;
-                if (stageHoldSec < 0) stageHoldSec = 0;
-                statusInd.className = "absolute top-2 right-2 px-2.5 py-1 text-xs font-bold bg-rose-500 text-slate-950 animate-pulse";
-                statusInd.textContent = "⚠️ 삐익! 게이지 감소중!";
-            }
-
-            const percent = Math.min(100, Math.round((stageHoldSec / st.holdReq) * 100));
-            document.getElementById('disp-hold-percent').textContent = percent + "%";
-            document.getElementById('bar-hold-progress').style.width = percent + "%";
-
-            if (stageHoldSec >= st.holdReq && !isTransitioning) {
-                isTransitioning = true;
-                if (currentStageIdx + 1 < stages.length) {
-                    showStageClearOverlay(currentStageIdx + 1);
-                } else {
-                    gameState = 'CLEAR';
-                    finishGame();
-                }
-            }
-
-            document.getElementById('disp-target-range').textContent = "실시간 목표: " + st.actualTargetP.toFixed(2) + " atm";
-            document.getElementById('disp-current-p').textContent = state.P.toFixed(2);
-            document.getElementById('val-v').textContent = state.V.toFixed(1) + " L";
-            document.getElementById('val-t').textContent = Math.round(state.T) + " K";
-            document.getElementById('val-n').textContent = state.n.toFixed(2) + " mol";
-
-            const totalSec = totalElapsedMs / 1000;
-            const mins = Math.floor(totalSec / 60);
-            const secs = Math.floor(totalSec % 60);
-            const ms = Math.floor((totalSec % 1) * 100);
-            document.getElementById('disp-total-timer').textContent = 
-                String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0') + "." + String(ms).padStart(2, '0');
-        }
-
-        function showStageClearOverlay(nextIdx) {
-            const banner = document.getElementById('stage-banner');
-            document.getElementById('banner-text').textContent = "LEVEL " + (currentStageIdx + 1) + " CLEAR!";
-            banner.classList.remove('hidden');
-            setTimeout(() => { initStage(nextIdx); }, 1200);
-        }
-
-        function finishGame() {
-            const finalFormatted = document.getElementById('disp-total-timer').textContent;
-            document.getElementById('disp-final-time').textContent = finalFormatted;
-            document.getElementById('modal-clear').classList.remove('hidden');
-            saveLeaderboardScore(nickname, totalElapsedMs, finalFormatted);
-        }
-
-        function saveLeaderboardScore(name, ms, formattedTime) {
-            let scores = JSON.parse(localStorage.getItem('thss_panic_leaderboard') || '[]');
-            scores.push({ name: name, ms: ms, timeStr: formattedTime, date: new Date().toLocaleDateString() });
-            scores.sort((a, b) => a.ms - b.ms);
-            scores = scores.slice(0, 10);
-            localStorage.setItem('thss_panic_leaderboard', JSON.stringify(scores));
-            renderLeaderboard();
-        }
-
-        function renderLeaderboard() {
-            const scores = JSON.parse(localStorage.getItem('thss_panic_leaderboard') || '[]');
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = '';
-            if (scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-600">등록된 기록이 없습니다.</td></tr>';
-                return;
-            }
-            scores.forEach(function(s, i) {
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-900 hover:bg-slate-900/50";
-                const rankColor = (i === 0 ? 'text-amber-400' : (i === 1 ? 'text-slate-300' : (i === 2 ? 'text-amber-600' : 'text-slate-500')));
-                tr.innerHTML = '<td class="py-1.5 font-bold ' + rankColor + '">' + (i + 1) + '위</td>' +
-                               '<td class="py-1.5 text-slate-200">' + s.name + '</td>' +
-                               '<td class="py-1.5 text-right text-emerald-400 font-bold">' + s.timeStr + '</td>';
-                tbody.appendChild(tr);
-            });
-        }
-
-        function restartGame() {
-            document.getElementById('modal-clear').classList.add('hidden');
-            document.getElementById('modal-start').classList.remove('hidden');
-        }
-
-        function drawGameCanvas() {
-            ctx.fillStyle = '#030712'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const st = stages[currentStageIdx] || stages[0];
-
-            const boxW = canvas.width - 60, boxH = 140;
-            const minX = 30, minY = (canvas.height - boxH) / 2;
-            
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fillRect(minX, minY, boxW, boxH);
-            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.strokeRect(minX, minY, boxW, boxH);
-
-            const targetP = st.actualTargetP || st.baseTargetP;
-            const minP = Math.max(0.1, targetP - st.tolerance);
-            const maxP = targetP + st.tolerance;
-
-            const maxIdealV = Math.min(60, (state.n * R * state.T) / minP);
-            const minIdealV = Math.max(10, (state.n * R * state.T) / maxP);
-
-            const mapVtoX = (v) => minX + (v / 60) * boxW;
-
-            const safeStartX = mapVtoX(minIdealV);
-            const safeEndX = mapVtoX(maxIdealV);
-            const safeW = Math.max(0, safeEndX - safeStartX);
-
-            const isTarget = Math.abs(state.P - targetP) <= st.tolerance;
-
-            if (safeW > 0) {
-                ctx.fillStyle = isTarget ? 'rgba(52, 211, 153, 0.4)' : 'rgba(52, 211, 153, 0.15)';
-                ctx.fillRect(safeStartX, minY, safeW, boxH);
-                ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2;
-                ctx.strokeRect(safeStartX, minY, safeW, boxH);
-            }
-
-            const pistonX = mapVtoX(state.V);
-            ctx.fillStyle = isTarget ? '#34d399' : '#f43f5e';
-            ctx.fillRect(pistonX, minY - 5, 8, boxH + 10);
-
-            particles.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                if (p.x < minX + 4) { p.x = minX + 4; p.vx = Math.abs(p.vx); }
-                if (p.x > pistonX - 4) { p.x = pistonX - 4; p.vx = -Math.abs(p.vx); }
-                if (p.y < minY + 4) { p.y = minY + 4; p.vy = Math.abs(p.vy); }
-                if (p.y > minY + boxH - 4) { p.y = minY + boxH - 4; p.vy = -Math.abs(p.vy); }
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-                ctx.fillStyle = isTarget ? '#34d399' : '#38bdf8';
-                ctx.fill();
-            });
-        }
-
-        function gameLoop(now) {
-            const dt = (now - lastTimestamp) / 1000;
-            lastTimestamp = now;
-            updateGameLogic(dt);
-            drawGameCanvas();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function applyCooldown(btnId, barId, flagName, actionFn) {
-            const btn = document.getElementById(btnId);
-            const bar = document.getElementById(barId);
-            btn.addEventListener('click', () => {
-                if(window[flagName]) return;
-                actionFn();
-                window[flagName] = true;
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                bar.style.transition = 'none';
-                bar.style.width = '100%';
-                setTimeout(() => {
-                    bar.style.transition = 'width 1.0s linear';
-                    bar.style.width = '0%';
-                }, 50);
-                setTimeout(() => {
-                    window[flagName] = false;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }, 1000);
-            });
-        }
-
-        window.onload = function() {
-            resizeCanvas();
-            renderLeaderboard();
-            window.addEventListener('resize', resizeCanvas);
-            document.getElementById('slider-game-v').addEventListener('input', (e) => { state.V = parseFloat(e.target.value); });
-            applyCooldown('btn-cool', 'cool-cd', 'coolOnCooldown', () => { state.T = Math.max(100, state.T - 80); });
-            applyCooldown('btn-heat', 'heat-cd', 'heatOnCooldown', () => { state.T = Math.min(2000, state.T + 80); });
-        };
-    <\/script>
-</body>
-</html>`
+                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#f43f5e;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🚀 우주선 수리 아케이드 게임 준비 완료</h1><p>관리자 대시보드에서 신규 미션 코드를 등록해 보세요!</p></div></body></html>`
             }
         ];
 
+        let simulators = [...defaultSimulators];
         let currentAppMode = 'lab';
         let currentCategory = 'all';
         let currentLevel = 'all';
@@ -1278,31 +549,36 @@
                 try { favorites = JSON.parse(localFavs); } catch(e) { favorites = []; }
             }
 
-            // Firebase 연동 초기화 시도
+            renderSimulators();
             initFirebase();
-
             updateAdminUI();
             updateFavBadge();
             setAppMode('lab');
         }
 
         function initFirebase() {
-            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
+            if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey) {
                 try {
                     const app = window.firebaseImports.initializeApp(firebaseConfig);
                     db = window.firebaseImports.getFirestore(app);
-                    console.log("🔥 Firebase DB 연결 성공!");
-                    document.getElementById('db-status-badge').textContent = '🟢 실시간 클라우드 DB 연동 중';
-                    document.getElementById('db-status-badge').classList.replace('text-slate-500', 'text-emerald-400');
-                    document.getElementById('sync-status-text').textContent = 'CLOUD SYNC :: ONLINE';
-                    document.getElementById('sync-status-text').classList.replace('text-amber-300', 'text-emerald-400');
-                    listenToSimulators(); // 실시간 데이터 동기화 시작
+                    
+                    const badge = document.getElementById('db-status-badge');
+                    if(badge) {
+                        badge.textContent = '🟢 실시간 구글 DB 연동 중';
+                        badge.classList.replace('text-slate-500', 'text-emerald-400');
+                    }
+                    const syncText = document.getElementById('sync-status-text');
+                    if(syncText) {
+                        syncText.textContent = 'COSMIC CLOUD :: ONLINE';
+                        syncText.classList.replace('text-sky-300', 'text-emerald-400');
+                    }
+                    
+                    listenToSimulators();
                 } catch(e) {
                     console.error("Firebase 초기화 에러:", e);
                     fallbackToLocal();
                 }
             } else {
-                console.log("⚠️ Firebase 설정이 없습니다. 로컬(내 컴퓨터) 저장소 모드로 작동합니다.");
                 fallbackToLocal();
             }
         }
@@ -1310,12 +586,10 @@
         function fallbackToLocal() {
             let allSims = localStorage.getItem('thss_all_sims');
             if (!allSims) {
-                let legacyCustom = localStorage.getItem('thss_custom_sims');
-                let customParsed = legacyCustom ? JSON.parse(legacyCustom) : [];
-                simulators = [...defaultSimulators, ...customParsed];
+                simulators = [...defaultSimulators];
                 localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
             } else {
-                simulators = JSON.parse(allSims);
+                try { simulators = JSON.parse(allSims); } catch(e) { simulators = [...defaultSimulators]; }
             }
             renderSimulators();
             if (!document.getElementById('manager-modal').classList.contains('hidden')) {
@@ -1323,30 +597,31 @@
             }
         }
 
-        // DB 실시간 동기화 수신 (Firebase용)
         function listenToSimulators() {
-            const colRef = window.firebaseImports.collection(db, 'simulators');
-            window.firebaseImports.onSnapshot(colRef, (snapshot) => {
-                firebaseSimulators = [];
-                snapshot.forEach(doc => {
-                    firebaseSimulators.push(doc.data());
+            if (!db) return;
+            try {
+                const colRef = window.firebaseImports.collection(db, 'simulators');
+                window.firebaseImports.onSnapshot(colRef, (snapshot) => {
+                    firebaseSimulators = [];
+                    snapshot.forEach(doc => {
+                        firebaseSimulators.push(doc.data());
+                    });
+                    mergeSimulators();
+                }, (error) => {
+                    console.error("Firestore 수신 에러:", error);
+                    fallbackToLocal();
                 });
-                mergeSimulators();
-            });
+            } catch(e) {
+                fallbackToLocal();
+            }
         }
 
         function mergeSimulators() {
-            // defaultSimulators와 firebaseSimulators(커스텀 및 수정된 기본값) 병합
-            let merged = [...defaultSimulators];
-            firebaseSimulators.forEach(fSim => {
-                const existingIdx = merged.findIndex(s => s.id === fSim.id);
-                if (existingIdx !== -1) {
-                    merged[existingIdx] = fSim; // 기본값 덮어쓰기
-                } else {
-                    merged.push(fSim); // 새 퀘스트 추가
-                }
-            });
-            simulators = merged;
+            if (firebaseSimulators.length > 0) {
+                simulators = firebaseSimulators;
+            } else {
+                simulators = [...defaultSimulators];
+            }
             
             if (!document.getElementById('manager-modal').classList.contains('hidden')) {
                 renderManagerTable();
@@ -1361,11 +636,8 @@
             if (isAdmin) {
                 adminStatusArea.innerHTML = `
                     <span class="text-[11px] font-bold px-2 py-1 bg-amber-400 text-slate-950 border border-amber-200 flex items-center gap-1 shadow-[2px_2px_0px_#000]">
-                        <i class="fa-solid fa-user-shield"></i> <span class="hidden sm:inline">ADMIN</span>
+                        <i class="fa-solid fa-user-shield"></i> <span class="hidden sm:inline">COMMANDER</span>
                     </span>
-                    <button onclick="openChangePinModal()" class="p-1.5 text-slate-300 hover:text-amber-300 bg-slate-800 border-2 border-slate-700 transition text-xs" title="비밀번호 변경">
-                        <i class="fa-solid fa-key"></i>
-                    </button>
                     <button onclick="logoutAdmin()" class="p-1.5 text-slate-300 hover:text-rose-400 bg-slate-800 border-2 border-slate-700 transition text-xs" title="로그아웃">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
@@ -1374,7 +646,7 @@
             } else {
                 adminStatusArea.innerHTML = `
                     <button onclick="openAdminLoginModal()" class="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex items-center gap-1.5 pixel-btn">
-                        <i class="fa-solid fa-lock text-[10px]"></i> 관리자 모드
+                        <i class="fa-solid fa-lock text-[10px]"></i> 사령관 모드
                     </button>
                 `;
                 btnManageSim.classList.add('hidden');
@@ -1403,36 +675,6 @@
             } else {
                 document.getElementById('login-error-msg').classList.remove('hidden');
             }
-        }
-
-        function openChangePinModal() {
-            document.getElementById('current-pin-input').value = '';
-            document.getElementById('new-pin-input').value = '';
-            document.getElementById('pin-change-error-msg').classList.add('hidden');
-            document.getElementById('pin-change-success-msg').classList.add('hidden');
-            document.getElementById('admin-pin-modal').classList.remove('hidden');
-        }
-
-        function closeChangePinModal() {
-            document.getElementById('admin-pin-modal').classList.add('hidden');
-        }
-
-        function handleChangePin(e) {
-            e.preventDefault();
-            const currentPin = document.getElementById('current-pin-input').value;
-            const newPin = document.getElementById('new-pin-input').value.trim();
-
-            if (currentPin !== getAdminPin()) {
-                document.getElementById('pin-change-error-msg').classList.remove('hidden');
-                document.getElementById('pin-change-success-msg').classList.add('hidden');
-                return;
-            }
-            if (!newPin) return;
-
-            localStorage.setItem('thss_admin_pin', newPin);
-            document.getElementById('pin-change-error-msg').classList.add('hidden');
-            document.getElementById('pin-change-success-msg').classList.remove('hidden');
-            setTimeout(() => { closeChangePinModal(); }, 1000);
         }
 
         function logoutAdmin() {
@@ -1481,7 +723,7 @@
             document.getElementById('add-modal').classList.remove('hidden');
             if (!isEdit) {
                 currentEditId = null;
-                document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-plus-circle"></i> 새 콘텐츠 등록';
+                document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-plus-circle"></i> 새 우주 미션 등록';
                 document.getElementById('add-sim-form').reset();
                 document.getElementById('input-edit-id').value = '';
             }
@@ -1496,9 +738,9 @@
             if (!sim) return;
             
             currentEditId = id;
-            document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 콘텐츠 수정';
+            document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 미션 수정';
             document.getElementById('input-edit-id').value = id;
-            document.getElementById('input-title').value = sim.title.replace(/^\[.*?\]\s*/, '');
+            document.getElementById('input-title').value = sim.title;
             document.getElementById('input-appmode').value = sim.appMode || 'lab';
             document.getElementById('input-category').value = sim.category;
             document.getElementById('input-level').value = sim.level;
@@ -1521,21 +763,18 @@
             let code = document.getElementById('input-html').value.trim();
             const editId = document.getElementById('input-edit-id').value;
 
-            const catNames = { thermo: '열역학', mechanics: '고전역학', waves: '파동/광학', electromagnetism: '전자기학' };
+            const catNames = { thermo: '대기/열역학', mechanics: '중력/고전역학', waves: '성운/파동광학', electromagnetism: '자기장/전자기학' };
             const catBadges = {
                 thermo: 'bg-amber-500/20 text-amber-300 border-amber-400',
                 mechanics: 'bg-emerald-500/20 text-emerald-400 border-emerald-400',
                 waves: 'bg-cyan-500/20 text-cyan-300 border-cyan-400',
                 electromagnetism: 'bg-purple-500/20 text-purple-400 border-purple-400'
             };
-            const levelNames = { middle: '중학교', high: '고등학교', univ: '대학교' };
+            const levelNames = { middle: '견습 (중등)', high: '정예 (고등)', univ: '사령관 (심화)' };
             
             if (code.startsWith('http://') || code.startsWith('https://')) {
                 code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>html,body,iframe{width:100%;height:100%;margin:0;padding:0;border:none;overflow:hidden;}</style></head><body><iframe src="${code}"></iframe></body></html>`;
             }
-
-            const prefix = appMode === 'arcade' ? '[ARCADE]' : '[LAB]';
-            const finalTitle = `${prefix} ${titleInput.replace(/^\[.*?\]\s*/, '')}`;
 
             let targetSim = null;
 
@@ -1543,77 +782,76 @@
                 targetSim = simulators.find(s => s.id === editId);
                 if (targetSim) {
                     targetSim.appMode = appMode;
-                    targetSim.title = finalTitle;
+                    targetSim.title = titleInput;
                     targetSim.category = category;
                     targetSim.categoryName = catNames[category];
                     targetSim.level = level;
                     targetSim.levelName = levelNames[level];
                     targetSim.badgeColor = catBadges[category];
-                    targetSim.icon = appMode === 'arcade' ? 'fa-solid fa-gamepad text-sky-400' : 'fa-solid fa-flask text-sky-400';
+                    targetSim.icon = appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400';
                     targetSim.description = desc;
                     targetSim.formula = formula;
                     targetSim.code = code;
                 }
             } else {
                 targetSim = {
-                    id: 'custom-sim-' + Date.now(),
+                    id: 'space-sim-' + Date.now(),
                     appMode: appMode,
-                    title: finalTitle,
+                    title: titleInput,
                     category: category,
                     categoryName: catNames[category],
                     level: level,
                     levelName: levelNames[level],
                     badgeColor: catBadges[category],
-                    icon: appMode === 'arcade' ? 'fa-solid fa-gamepad text-sky-400' : 'fa-solid fa-flask text-sky-400',
+                    icon: appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400',
                     description: desc,
                     formula: formula,
                     code: code,
-                    guideList: ['등록된 사용자 정의 콘텐츠입니다.']
+                    guideList: ['신규 등록된 우주 탐방 미션입니다. 조종석에서 대원 가이드를 확인해보세요.']
                 };
             }
 
             if (!targetSim) return;
 
-            // 저장 처리 (DB or 로컬)
             if (db) {
-                // Firebase Firestore에 저장 (실시간 동기화 트리거됨)
                 window.firebaseImports.setDoc(window.firebaseImports.doc(db, "simulators", targetSim.id), targetSim)
                     .then(() => {
-                        console.log("🔥 DB에 콘텐츠 저장 완료!");
                         closeAddEditSimModal();
                     })
                     .catch((error) => {
-                        console.error("DB 저장 에러: ", error);
-                        alert("데이터베이스 저장 중 오류가 발생했습니다.");
+                        console.error("DB 저장 에러:", error);
+                        alert("데이터베이스 저장에 실패했습니다. 로컬에 저장합니다.");
+                        saveToLocalFallback(targetSim, editId);
                     });
             } else {
-                // 로컬 저장소에 저장
-                if (!editId) {
-                    simulators.push(targetSim);
-                }
-                localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
-                closeAddEditSimModal();
-                if (!document.getElementById('manager-modal').classList.contains('hidden')) {
-                    renderManagerTable();
-                }
-                renderSimulators();
+                saveToLocalFallback(targetSim, editId);
             }
         }
 
+        function saveToLocalFallback(targetSim, editId) {
+            if (!editId) {
+                simulators.push(targetSim);
+            }
+            localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
+            closeAddEditSimModal();
+            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
+                renderManagerTable();
+            }
+            renderSimulators();
+        }
+
         function deleteSimulatorFromManager(id) {
-            if (confirm('이 콘텐츠를 정말 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.')) {
+            if (confirm('이 미션을 우주 지도에서 정말 삭제하시겠습니까?')) {
                 if (db) {
-                    // Firebase Firestore에서 삭제
                     window.firebaseImports.deleteDoc(window.firebaseImports.doc(db, "simulators", id))
-                        .then(() => {
-                            console.log("🔥 DB에서 삭제 완료!");
-                        })
+                        .then(() => {})
                         .catch((error) => {
-                            console.error("DB 삭제 에러: ", error);
-                            alert("삭제 중 오류가 발생했습니다.");
+                            simulators = simulators.filter(s => s.id !== id);
+                            localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
+                            renderManagerTable();
+                            renderSimulators();
                         });
                 } else {
-                    // 로컬 삭제
                     simulators = simulators.filter(s => s.id !== id);
                     localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
                     renderManagerTable();
@@ -1697,9 +935,12 @@
         function renderSimulators() {
             const grid = document.getElementById('simulator-grid');
             const emptyState = document.getElementById('empty-state');
+            if (!grid) return;
             grid.innerHTML = '';
 
-            let filtered = simulators.filter(s => {
+            let safeSims = Array.isArray(simulators) ? simulators : defaultSimulators;
+
+            let filtered = safeSims.filter(s => {
                 const matchMode = (currentCategory === 'favs') ? true : (s.appMode === currentAppMode);
                 const matchCat = (currentCategory === 'all' || currentCategory === 'favs' || s.category === currentCategory);
                 const matchLevel = (currentLevel === 'all' || s.level === currentLevel);
@@ -1712,14 +953,14 @@
 
             if (currentCategory === 'favs') {
                 filtered = filtered.filter(s => favorites.includes(s.id));
-                document.getElementById('empty-state-title').textContent = "즐겨찾기한 항목이 없습니다";
+                document.getElementById('empty-state-title').textContent = "즐겨찾기한 별/미션이 없습니다";
             } else {
-                document.getElementById('empty-state-title').textContent = "조건에 맞는 콘텐츠가 없습니다";
+                document.getElementById('empty-state-title').textContent = "해당하는 우주 미션이 없습니다";
             }
 
             const statCountSim = document.getElementById('stat-count-sim');
             if (statCountSim) {
-                statCountSim.textContent = simulators.filter(s => s.appMode === currentAppMode).length;
+                statCountSim.textContent = safeSims.filter(s => s.appMode === currentAppMode).length;
             }
 
             if (filtered.length === 0) {
@@ -1729,13 +970,13 @@
                 filtered.forEach(sim => {
                     const isFav = favorites.includes(sim.id);
                     const card = document.createElement('div');
-                    card.className = 'pixel-card rounded-none p-5 flex flex-col justify-between relative group';
+                    card.className = 'space-card rounded-none p-5 flex flex-col justify-between relative group';
                     
                     card.innerHTML = `
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="text-[11px] font-bold px-2.5 py-1 rounded-none border ${sim.badgeColor} flex items-center gap-1.5 shadow-[1px_1px_0px_#000]">
-                                    <i class="${sim.icon}"></i> ${sim.categoryName}
+                                <span class="text-[11px] font-bold px-2.5 py-1 rounded-none border ${sim.badgeColor || 'bg-sky-500/20 text-sky-300 border-sky-400'} flex items-center gap-1.5 shadow-[1px_1px_0px_#000]">
+                                    <i class="${sim.icon || 'fa-solid fa-globe'}"></i> ${sim.categoryName || '우주 탐사'}
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] text-slate-300 font-bold bg-slate-900 border border-slate-700 px-2 py-0.5">${sim.levelName || '일반'}</span>
@@ -1759,7 +1000,7 @@
                                 </div>
                             ` : ''}
                             <button onclick="launchWorkspace('${sim.id}')" class="w-full py-2 ${sim.appMode === 'arcade' ? 'bg-rose-500 hover:bg-rose-400 border-rose-300' : 'bg-sky-500 hover:bg-sky-400 border-sky-300'} text-slate-950 font-bold text-xs border-2 pixel-btn shadow-[3px_3px_0px_#000] flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-play text-xs"></i> ${sim.appMode === 'arcade' ? 'GAME START' : 'SIMULATION PLAY'}
+                                <i class="fa-solid fa-rocket text-xs"></i> ${sim.appMode === 'arcade' ? 'GAME START' : 'PLANET EXPLORE'}
                             </button>
                         </div>
                     `;
@@ -1777,7 +1018,7 @@
             const sim = simulators.find(s => s.id === simId);
             if (!sim) return;
 
-            document.getElementById('ws-title').textContent = sim.title.replace(/^\[.*?\]\s*/, '');
+            document.getElementById('ws-title').textContent = sim.title;
             document.getElementById('ws-category-badge').textContent = sim.categoryName;
             document.getElementById('ws-description').textContent = sim.description;
             document.getElementById('ws-formula').textContent = sim.formula || 'N/A';
@@ -1791,7 +1032,7 @@
                     guideListElem.appendChild(li);
                 });
             } else {
-                guideListElem.innerHTML = '<li>제공된 파라미터를 조절하며 결과를 확인해보세요.</li>';
+                guideListElem.innerHTML = '<li>우주 대원 가이드에 따라 미션을 수행하세요.</li>';
             }
 
             const panel = document.getElementById('ws-side-panel');
