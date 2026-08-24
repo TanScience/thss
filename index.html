@@ -101,19 +101,6 @@
         }
 
         .animate-float { animation: floatSpace 3.5s ease-in-out infinite; }
-        
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-        }
-
-        .neon-glow-cyan {
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-        }
-        
-        .neon-glow-rose {
-            box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-400 selection:text-slate-950 pixel-font">
@@ -123,15 +110,15 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 
-                <!-- Logo & Astronaut Mission Title -->
+                <!-- Logo & Mission Title -->
                 <div class="flex items-center gap-3 cursor-pointer group" onclick="setAppMode(currentAppMode)">
-                    <div class="w-10 h-10 rounded-none bg-indigo-600 border-2 border-indigo-300 flex items-center justify-center text-amber-300 shadow-[3px_3px_0px_#000] group-hover:bg-amber-400 group-hover:text-slate-950 transition">
+                    <div class="w-10 h-10 bg-indigo-600 border-2 border-indigo-300 flex items-center justify-center text-amber-300 shadow-[3px_3px_0px_#000] group-hover:bg-amber-400 group-hover:text-slate-950 transition">
                         <i class="fa-solid fa-user-astronaut text-xl animate-bounce"></i>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xl tracking-wider text-amber-300 drop-shadow-[2px_2px_0px_#000]">THSS</span>
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 border border-indigo-400">COSMIC V4.0</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 border border-indigo-400">COSMIC V4.1</span>
                         </div>
                         <p class="text-[11px] text-slate-400 font-medium">우주 탐방 과학 포털 & 아케이드</p>
                     </div>
@@ -141,18 +128,13 @@
                 <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
                     <div class="relative w-full">
                         <i class="fa-solid fa-satellite-dish absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
-                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="🔍 탐사 미션 / 우주 게임 검색 (이상기체, 블랙홀...)" 
+                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="🔍 탐사 미션 / 우주 게임 검색..." 
                             class="w-full pl-9 pr-4 py-1.5 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300 placeholder-slate-500 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
                     </div>
                 </div>
 
-                <!-- Astronaut Status & Admin Control -->
+                <!-- Controls -->
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex items-center gap-2 bg-slate-950 px-3 py-1 border border-slate-800 text-[11px]">
-                        <span class="text-amber-400">👩‍🚀 대원 STATUS:</span>
-                        <span class="text-emerald-400 font-bold">READY</span>
-                    </div>
-
                     <div id="admin-status-area" class="flex items-center gap-2"></div>
 
                     <button onclick="openManagerModal()" id="btn-manage-sim" class="hidden flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 border-2 border-amber-200 pixel-btn">
@@ -160,7 +142,7 @@
                         <span class="hidden sm:inline">사령부 관리</span>
                     </button>
 
-                    <button onclick="toggleFavoritesTab()" id="btn-fav-toggle" class="p-2 text-slate-400 hover:text-amber-300 bg-slate-800 border-2 border-slate-700 transition relative pixel-btn" title="즐겨찾기 성운">
+                    <button onclick="toggleFavoritesTab()" id="btn-fav-toggle" class="p-2 text-slate-400 hover:text-amber-300 bg-slate-800 border-2 border-slate-700 transition relative pixel-btn" title="즐겨찾기">
                         <i class="fa-solid fa-star text-sm"></i>
                         <span id="fav-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-slate-950 font-bold text-[10px] border border-slate-950 flex items-center justify-center">0</span>
                     </button>
@@ -174,7 +156,6 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 
-                <!-- Hero Left: Mission Intro -->
                 <div class="lg:col-span-7 text-center lg:text-left">
                     <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-400/50 text-xs font-bold mb-3 shadow-[2px_2px_0px_#000]">
                         <i class="fa-solid fa-user-astronaut text-sky-400 animate-pulse"></i> TH TEACHER'S SPACE EXPLORER
@@ -188,7 +169,6 @@
                         우주선 수리 및 탈출 미션에 도전하는 <span class="text-rose-400 font-bold">[우주 탈출 ARCADE]</span> 모드를 선택하세요!
                     </p>
 
-                    <!-- Space Quick Counters -->
                     <div class="grid grid-cols-3 gap-3 mt-6 max-w-md mx-auto lg:mx-0">
                         <div class="space-panel p-2.5 text-center border-sky-500">
                             <div class="text-lg md:text-xl font-bold text-sky-400" id="stat-count-sim">0</div>
@@ -205,7 +185,6 @@
                     </div>
                 </div>
 
-                <!-- Hero Right: Interactive Astronaut Cockpit Visual -->
                 <div class="lg:col-span-5 relative">
                     <div class="space-panel p-4 bg-slate-950 border-4 border-indigo-900 shadow-[6px_6px_0px_#000] relative">
                         <div class="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-3">
@@ -223,7 +202,7 @@
                                 <span class="animate-float text-amber-400" style="animation-delay: 0.5s;">👩‍🚀</span>
                                 <span class="animate-float text-sky-400" style="animation-delay: 1.0s;">🚀</span>
                             </div>
-                            <p class="text-xs text-sky-300 font-bold mt-2" id="sync-status-text">COSMIC NETWORK READY</p>
+                            <p class="text-xs text-sky-300 font-bold mt-2" id="sync-status-text">INITIALIZING NETWORK...</p>
                             <p class="text-[11px] text-slate-400 mt-1">SELECT MISSION MODE BELOW</p>
                         </div>
                     </div>
@@ -236,7 +215,7 @@
     <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full flex flex-col">
 
-        <!-- Master Mode Switcher (Cosmic Twin Tabs) -->
+        <!-- Master Mode Switcher -->
         <div class="flex justify-center mb-8">
             <div class="bg-slate-950 p-1.5 flex border-4 border-slate-800 shadow-[6px_6px_0px_#020617] max-w-xl w-full">
                 <button onclick="setAppMode('lab')" id="btn-mode-lab" class="flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-400 hover:text-amber-300">
@@ -248,14 +227,15 @@
             </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- Filter Bar (동기화 수정된 카테고리 버튼들) -->
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0" id="category-pills">
                 <button onclick="filterCategory('all')" class="cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap" data-cat="all">🌟 전체 은하계</button>
-                <button onclick="filterCategory('thermo')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="thermo">🔥 대기/열역학</button>
-                <button onclick="filterCategory('mechanics')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-emerald-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="mechanics">⚙️ 중력/고전역학</button>
-                <button onclick="filterCategory('waves')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-cyan-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="waves">🌊 성운/파동광학</button>
-                <button onclick="filterCategory('electromagnetism')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-purple-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="electromagnetism">⚡ 자기장/전자기학</button>
+                <button onclick="filterCategory('struct')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-sky-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="struct">🧪 구조와 상호작용</button>
+                <button onclick="filterCategory('reaction')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-rose-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="reaction">🔥 반응과 양적관계</button>
+                <button onclick="filterCategory('equilibrium')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="equilibrium">🌀 속도와 동적평형</button>
+                <button onclick="filterCategory('energy')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-emerald-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="energy">⚡ 에너지와 상태변화</button>
+                <button onclick="filterCategory('earth')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-yellow-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="earth">🪐 지구와 우주</button>
             </div>
 
             <!-- Difficulty Level Filter -->
@@ -309,12 +289,10 @@
         </div>
 
         <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            <!-- Game / Simulator Frame Canvas -->
             <div class="flex-1 bg-black relative flex items-center justify-center overflow-hidden" id="ws-frame-container">
                 <iframe id="ws-iframe" class="w-full h-full border-none" title="Space Cockpit Simulator Workspace"></iframe>
             </div>
 
-            <!-- Space Mission Guide Sidebar -->
             <div id="ws-side-panel" class="w-full lg:w-80 border-t-4 lg:border-t-0 lg:border-l-4 border-slate-800 bg-slate-900 p-4 overflow-y-auto flex flex-col gap-4">
                 <div>
                     <div class="flex items-center justify-between mb-2">
@@ -369,7 +347,7 @@
             <div class="flex-1 overflow-y-auto p-4">
                 <div class="text-xs text-slate-400 mb-4 bg-slate-950 p-3 border border-slate-800 flex justify-between items-center">
                     <span>💡 이곳에서 새로 추가하는 미션과 게임은 <span class="text-amber-300 font-bold">전 세계 우주 대원들에게 실시간 동기화</span>됩니다.</span>
-                    <span id="db-status-badge" class="px-2 py-0.5 font-bold bg-slate-800 text-slate-500 border border-slate-700">DB 연결 확인중...</span>
+                    <span id="db-status-badge" class="px-2 py-0.5 font-bold bg-slate-800 text-slate-400 border border-slate-700">DB 연결 확인중...</span>
                 </div>
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
@@ -380,15 +358,13 @@
                             <th class="p-3 font-bold w-32 text-center">관리</th>
                         </tr>
                     </thead>
-                    <tbody id="manager-table-body">
-                        <!-- Dynamic Rows -->
-                    </tbody>
+                    <tbody id="manager-table-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Edit/Add Form Modal -->
+    <!-- Edit/Add Form Modal (동기화 수정된 드롭다운 옵션) -->
     <div id="add-modal" class="fixed inset-0 z-50 bg-slate-950/90 hidden flex items-center justify-center p-4">
         <div class="space-panel w-full max-w-2xl h-[90vh] flex flex-col relative border-4 border-sky-500 shadow-[8px_8px_0px_#000] bg-slate-900">
             <div class="flex items-center justify-between p-4 border-b-4 border-slate-800 bg-slate-950">
@@ -419,10 +395,11 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">분야 카테고리 *</label>
                         <select id="input-category" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
-                            <option value="thermo">🧪 구조와 상호작용</option>
-                            <option value="mechanics">🔥 반응과 양적관계</option>
-                            <option value="waves">🌊 속도와 동적평형</option>
-                            <option value="electromagnetism">⚡ 에너지와 상태변화</option>
+                            <option value="struct">🧪 구조와 상호작용</option>
+                            <option value="reaction">🔥 반응과 양적관계</option>
+                            <option value="equilibrium">🌀 속도와 동적평형</option>
+                            <option value="energy">⚡ 에너지와 상태변화</option>
+                            <option value="earth">🪐 지구와 우주</option>
                         </select>
                     </div>
                     <div>
@@ -458,7 +435,7 @@
         </div>
     </div>
 
-    <!-- Admin Login / PIN Modals -->
+    <!-- Admin Login Modals -->
     <div id="admin-login-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
         <div class="space-panel w-full max-w-sm p-6 text-center border-4 border-amber-400 relative">
             <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -478,32 +455,31 @@
         // =========================================================================
         // 🔥 구글 파이어베이스(Firebase) 실시간 DB 연동 키
         // =========================================================================
-       const firebaseConfig = {
-  apiKey: "AIzaSyCIVdzSumEKJr57nIBr7vK0tVEuTRbZHTw",
-  authDomain: "thss-portal.firebaseapp.com",
-  projectId: "thss-portal",
-  storageBucket: "thss-portal.firebasestorage.app",
-  messagingSenderId: "563725223121",
-  appId: "1:563725223121:web:4e880e1d95882c7276f1f0"
-};
+        const firebaseConfig = {
+            // apiKey: "AIzaSyB...",
+            // authDomain: "thss-portal.firebaseapp.com",
+            // projectId: "thss-portal",
+            // storageBucket: "thss-portal.firebasestorage.app",
+            // messagingSenderId: "123456789",
+            // appId: "1:123456789:web:abcdefg"
+        };
 
-        // Firebase 인스턴스 보관용 변수
         let db = null;
         let firebaseSimulators = [];
         let favorites = [];
 
-        // 우주 탐방 컨셉 기본 제공 미션 플레이스홀더 데이터
+        // 동기화된 기본 시뮬레이터 목록
         const defaultSimulators = [
             {
                 id: 'planet-gas-sim-default',
                 appMode: 'lab',
                 title: '🪐 [가스 행성] 기체 법칙 & 대기압 탐사',
-                category: 'thermo',
-                categoryName: '대기/열역학',
+                category: 'energy',
+                categoryName: '에너지와 상태변화',
                 level: 'high',
                 levelName: '정예 (고등)',
-                badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-400',
-                icon: 'fa-solid fa-globe text-amber-400',
+                badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-400',
+                icon: 'fa-solid fa-globe text-emerald-400',
                 description: '미지의 가스 거대 행성에 착륙했습니다! 기체 상태 방정식(PV = nRT)을 바탕으로 대기 입자의 운동과 압력, 온도 변동을 관측하세요.',
                 formula: 'P · V = n · R · T',
                 guideList: [
@@ -513,22 +489,22 @@
                 code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#38bdf8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🪐 가스 행성 탐사 시뮬레이터 준비 완료</h1><p>관리자 페이지에서 실제 시뮬레이터 코드를 언제든지 등록할 수 있습니다.</p></div></body></html>`
             },
             {
-                id: 'space-reactor-game-default',
-                appMode: 'arcade',
-                title: '🚀 [우주선 고치기] 원자로 압력 밸런스 타임어택',
-                category: 'thermo',
-                categoryName: '우주 생존',
-                level: 'high',
-                levelName: '정예 (고등)',
+                id: 'copper-redox-sim-default',
+                appMode: 'lab',
+                title: '🧪 [화학 실험] 구리의 산화와 환원 연속 탐사 LAB',
+                category: 'reaction',
+                categoryName: '반응과 양적관계',
+                level: 'middle',
+                levelName: '견습 (중등)',
                 badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-400',
-                icon: 'fa-solid fa-triangle-exclamation text-rose-400',
-                description: '우주선 엔진 원자로에 과열 경보가 울렸습니다! 요동치는 목표 압력을 향해 피스톤 슬라이더와 비상 쿨러로 압력을 방어하고 지구로 귀환하세요!',
-                formula: 'P = (n · R · T) / V',
+                icon: 'fa-solid fa-vial text-rose-400',
+                description: '구리를 가열하여 검은색 산화 구리(II)로 변환시키고, 탄소를 넣어 다시 붉은색 구리로 환원시키는 연속 반응을 실험해 보세요.',
+                formula: '2Cu + O₂ ➔ 2CuO / 2CuO + C ➔ 2Cu + CO₂↑',
                 guideList: [
-                    '도망가는 안전 구역을 피스톤 슬라이더로 추격하세요.',
-                    '비상 쿨러 버튼을 타임에 맞춰 사용하여 원자로 폭발을 막으세요.'
+                    '가열 시작을 눌러 반응 시간을 측정하세요.',
+                    '탄소(C)를 투입하여 산화 구리가 다시 붉은 구리로 환원되는 과정을 질량 그래프로 확인하세요.'
                 ],
-                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#f43f5e;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🚀 우주선 수리 아케이드 게임 준비 완료</h1><p>관리자 대시보드에서 신규 미션 코드를 등록해 보세요!</p></div></body></html>`
+                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#f43f5e;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🧪 구리의 산화-환원 반응 준비 완료</h1><p>사령부 관리에서 코드를 복사하여 저장해 보세요.</p></div></body></html>`
             }
         ];
 
@@ -554,36 +530,84 @@
                 try { favorites = JSON.parse(localFavs); } catch(e) { favorites = []; }
             }
 
-            renderSimulators();
-            initFirebase();
+            fallbackToLocal();
             updateAdminUI();
             updateFavBadge();
             setAppMode('lab');
+
+            initFirebase();
         }
 
         function initFirebase() {
-            if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey) {
-                try {
-                    const app = window.firebaseImports.initializeApp(firebaseConfig);
-                    db = window.firebaseImports.getFirestore(app);
-                    
-                    const badge = document.getElementById('db-status-badge');
-                    if(badge) {
-                        badge.textContent = '🟢 실시간 구글 DB 연동 중';
-                        badge.classList.replace('text-slate-500', 'text-emerald-400');
-                    }
-                    const syncText = document.getElementById('sync-status-text');
-                    if(syncText) {
-                        syncText.textContent = 'COSMIC CLOUD :: ONLINE';
-                        syncText.classList.replace('text-sky-300', 'text-emerald-400');
-                    }
-                    
-                    listenToSimulators();
-                } catch(e) {
-                    console.error("Firebase 초기화 에러:", e);
-                    fallbackToLocal();
+            const badge = document.getElementById('db-status-badge');
+            const syncText = document.getElementById('sync-status-text');
+
+            if (typeof firebaseConfig === 'undefined' || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes('...')) {
+                if (badge) {
+                    badge.textContent = '🔴 DB 키 미입력 (로컬 저장소 작동)';
+                    badge.className = 'px-2 py-0.5 font-bold bg-rose-950 text-rose-300 border border-rose-800';
                 }
-            } else {
+                if (syncText) {
+                    syncText.textContent = 'LOCAL STORAGE :: ACTIVE';
+                    syncText.className = 'text-xs text-amber-400 font-bold mt-2';
+                }
+                return;
+            }
+
+            if (!window.firebaseImports || !window.firebaseImports.initializeApp) {
+                setTimeout(initFirebase, 200);
+                return;
+            }
+
+            try {
+                const app = window.firebaseImports.initializeApp(firebaseConfig);
+                db = window.firebaseImports.getFirestore(app);
+                listenToSimulators();
+            } catch(e) {
+                console.error("Firebase 초기화 에러:", e);
+                if (badge) {
+                    badge.textContent = '🔴 DB 설정 오류 (로컬 모드)';
+                    badge.className = 'px-2 py-0.5 font-bold bg-rose-950 text-rose-300 border border-rose-800';
+                }
+            }
+        }
+
+        function listenToSimulators() {
+            if (!db) return;
+            const badge = document.getElementById('db-status-badge');
+            const syncText = document.getElementById('sync-status-text');
+
+            try {
+                const colRef = window.firebaseImports.collection(db, 'simulators');
+                window.firebaseImports.onSnapshot(colRef, (snapshot) => {
+                    firebaseSimulators = [];
+                    snapshot.forEach(doc => {
+                        firebaseSimulators.push(doc.data());
+                    });
+
+                    if (badge) {
+                        badge.textContent = '🟢 실시간 구글 DB 연동 중';
+                        badge.className = 'px-2 py-0.5 font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
+                    }
+                    if (syncText) {
+                        syncText.textContent = 'COSMIC CLOUD :: ONLINE';
+                        syncText.className = 'text-xs text-emerald-400 font-bold mt-2';
+                    }
+
+                    mergeSimulators();
+                }, (error) => {
+                    console.error("Firestore 수신 에러:", error);
+                    if (badge) {
+                        badge.textContent = '⚠️ DB 권한 에러 (테스트 모드 필요)';
+                        badge.className = 'px-2 py-0.5 font-bold bg-amber-950 text-amber-300 border border-amber-800';
+                    }
+                    if (syncText) {
+                        syncText.textContent = 'ACCESS DENIED :: TEST MODE NEEDED';
+                        syncText.className = 'text-xs text-rose-400 font-bold mt-2';
+                    }
+                    fallbackToLocal();
+                });
+            } catch(e) {
                 fallbackToLocal();
             }
         }
@@ -594,30 +618,18 @@
                 simulators = [...defaultSimulators];
                 localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
             } else {
-                try { simulators = JSON.parse(allSims); } catch(e) { simulators = [...defaultSimulators]; }
+                try { 
+                    simulators = JSON.parse(allSims); 
+                    if (!Array.isArray(simulators) || simulators.length === 0) {
+                        simulators = [...defaultSimulators];
+                    }
+                } catch(e) { 
+                    simulators = [...defaultSimulators]; 
+                }
             }
             renderSimulators();
             if (!document.getElementById('manager-modal').classList.contains('hidden')) {
                 renderManagerTable();
-            }
-        }
-
-        function listenToSimulators() {
-            if (!db) return;
-            try {
-                const colRef = window.firebaseImports.collection(db, 'simulators');
-                window.firebaseImports.onSnapshot(colRef, (snapshot) => {
-                    firebaseSimulators = [];
-                    snapshot.forEach(doc => {
-                        firebaseSimulators.push(doc.data());
-                    });
-                    mergeSimulators();
-                }, (error) => {
-                    console.error("Firestore 수신 에러:", error);
-                    fallbackToLocal();
-                });
-            } catch(e) {
-                fallbackToLocal();
             }
         }
 
@@ -702,6 +714,7 @@
 
         function renderManagerTable() {
             const tbody = document.getElementById('manager-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
             
             simulators.forEach(sim => {
@@ -713,7 +726,7 @@
                             ${sim.appMode === 'arcade' ? 'ARCADE' : 'LAB'}
                         </span>
                     </td>
-                    <td class="p-3 text-slate-300 font-bold">${sim.categoryName}</td>
+                    <td class="p-3 text-slate-300 font-bold">${sim.categoryName || '일반'}</td>
                     <td class="p-3 text-amber-300 font-bold truncate max-w-xs">${sim.title}</td>
                     <td class="p-3 text-center">
                         <button onclick="editSimulator('${sim.id}')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded mr-1 transition"><i class="fa-solid fa-pen"></i></button>
@@ -756,6 +769,7 @@
             openAddEditSimModal(true);
         }
 
+        // 동기화된 데이터 저장 로직
         function saveSimulatorData(e) {
             e.preventDefault();
 
@@ -768,12 +782,20 @@
             let code = document.getElementById('input-html').value.trim();
             const editId = document.getElementById('input-edit-id').value;
 
-            const catNames = { thermo: '대기/열역학', mechanics: '중력/고전역학', waves: '성운/파동광학', electromagnetism: '자기장/전자기학' };
+            // 완벽하게 동기화된 카테고리 명칭 매핑
+            const catNames = { 
+                struct: '구조와 상호작용',
+                reaction: '반응과 양적관계', 
+                equilibrium: '속도와 동적평형', 
+                energy: '에너지와 상태변화', 
+                earth: '지구와 우주'
+            };
             const catBadges = {
-                thermo: 'bg-amber-500/20 text-amber-300 border-amber-400',
-                mechanics: 'bg-emerald-500/20 text-emerald-400 border-emerald-400',
-                waves: 'bg-cyan-500/20 text-cyan-300 border-cyan-400',
-                electromagnetism: 'bg-purple-500/20 text-purple-400 border-purple-400'
+                struct: 'bg-sky-500/20 text-sky-300 border-sky-400',
+                reaction: 'bg-rose-500/20 text-rose-300 border-rose-400',
+                equilibrium: 'bg-amber-500/20 text-amber-300 border-amber-400',
+                energy: 'bg-emerald-500/20 text-emerald-300 border-emerald-400',
+                earth: 'bg-yellow-500/20 text-yellow-300 border-yellow-400'
             };
             const levelNames = { middle: '견습 (중등)', high: '정예 (고등)', univ: '사령관 (심화)' };
             
@@ -789,10 +811,10 @@
                     targetSim.appMode = appMode;
                     targetSim.title = titleInput;
                     targetSim.category = category;
-                    targetSim.categoryName = catNames[category];
+                    targetSim.categoryName = catNames[category] || '일반 탐사';
                     targetSim.level = level;
                     targetSim.levelName = levelNames[level];
-                    targetSim.badgeColor = catBadges[category];
+                    targetSim.badgeColor = catBadges[category] || 'bg-sky-500/20 text-sky-300 border-sky-400';
                     targetSim.icon = appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400';
                     targetSim.description = desc;
                     targetSim.formula = formula;
@@ -804,10 +826,10 @@
                     appMode: appMode,
                     title: titleInput,
                     category: category,
-                    categoryName: catNames[category],
+                    categoryName: catNames[category] || '일반 탐사',
                     level: level,
                     levelName: levelNames[level],
-                    badgeColor: catBadges[category],
+                    badgeColor: catBadges[category] || 'bg-sky-500/20 text-sky-300 border-sky-400',
                     icon: appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400',
                     description: desc,
                     formula: formula,
@@ -825,7 +847,6 @@
                     })
                     .catch((error) => {
                         console.error("DB 저장 에러:", error);
-                        alert("데이터베이스 저장에 실패했습니다. 로컬에 저장합니다.");
                         saveToLocalFallback(targetSim, editId);
                     });
             } else {
