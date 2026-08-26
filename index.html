@@ -1,460 +1,406 @@
 <!DOCTYPE html>
-<html lang="ko" class="dark">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THSS COSMIC LAB - 우주 탐방 과학 포털</title>
+    <title>THSS 우주 탐사 포털 - 과학 시뮬레이터 Hub</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Firebase SDK (Module) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 전역 객체로 모듈 내보내기
-        window.firebaseImports = { initializeApp, getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc };
-    </script>
+    <!-- 🔥 Google Firebase SDK (Compat Version for Static HTML) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
         @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2');
 
-        @font-face {
-            font-family: 'DungGeunMo';
-            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/DungGeunMo.woff2') format('woff2');
-            font-weight: normal; font-style: normal;
-        }
-
         body {
-            font-family: 'DungGeunMo', 'Pretendard', monospace;
+            font-family: 'DungGeunMo', 'Pretendard', sans-serif;
             background-color: #030712;
             color: #f3f4f6;
             image-rendering: pixelated;
-            background-image: 
-                radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 40px 70px, #38bdf8, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 90px 40px, #f59e0b, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 160px 120px, #a855f7, rgba(0,0,0,0));
-            background-repeat: repeat;
-            background-size: 200px 200px;
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .pixel-font { font-family: 'DungGeunMo', monospace; letter-spacing: 0.5px; }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0b0f19; }
-        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 0px; }
-        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
-
-        .space-panel {
-            background: rgba(11, 15, 25, 0.92);
-            border: 3px solid #1e293b;
-            box-shadow: 4px 4px 0px #000000;
+        /* Starry Space Background Effect */
+        .stars-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #030712 radial-gradient(ellipse at bottom, #1e1b4b 0%, #030712 100%);
+            overflow: hidden;
         }
 
-        .space-card {
-            background: rgba(17, 24, 39, 0.88);
-            border: 2px solid #374151;
-            box-shadow: 4px 4px 0px #030712;
-            transition: all 0.15s ease-in-out;
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
         }
 
-        .space-card:hover {
-            transform: translate(-3px, -3px);
-            border-color: #38bdf8;
-            box-shadow: 7px 7px 0px #000000;
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        /* Pixel Cards & Buttons */
+        .pixel-card {
+            background: rgba(15, 23, 42, 0.92);
+            border: 3px solid #334155;
+            box-shadow: 4px 4px 0px #000;
+            backdrop-filter: blur(8px);
+        }
+
+        .pixel-card-gold {
+            background: rgba(15, 23, 42, 0.95);
+            border: 3px solid #f59e0b;
+            box-shadow: 4px 4px 0px #000;
+            backdrop-filter: blur(8px);
+        }
+
+        .pixel-card-glow {
+            background: rgba(15, 23, 42, 0.92);
+            border: 3px solid #38bdf8;
+            box-shadow: 0px 0px 15px rgba(56, 189, 248, 0.3), 4px 4px 0px #000;
         }
 
         .pixel-btn {
             border: 2px solid #38bdf8;
-            box-shadow: 3px 3px 0px #000000;
+            box-shadow: 3px 3px 0px #000;
             transition: all 0.1s ease;
         }
 
         .pixel-btn:active {
             transform: translate(2px, 2px);
-            box-shadow: 1px 1px 0px #000000;
+            box-shadow: 1px 1px 0px #000;
         }
 
-        .pixel-btn-amber {
-            background-color: #f59e0b;
-            color: #020617;
-            border-color: #fde047;
-            box-shadow: 3px 3px 0px #000000;
-        }
-
-        .pixel-btn-amber:hover { background-color: #fbbf24; }
-
-        .modal-backdrop {
-            background: rgba(3, 7, 18, 0.92);
-            backdrop-filter: blur(6px);
-        }
-
-        @keyframes floatSpace {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(3deg); }
-        }
-
-        .animate-float { animation: floatSpace 3.5s ease-in-out infinite; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-400 selection:text-slate-950 pixel-font">
+<body class="min-h-screen p-3 md:p-6 flex flex-col justify-between max-w-7xl mx-auto space-y-4">
 
-    <!-- Cosmic Space Station Header HUD -->
-    <header class="sticky top-0 z-40 border-b-4 border-slate-800 bg-slate-900/95 backdrop-blur">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                
-                <!-- Logo & Mission Title -->
-                <div class="flex items-center gap-3 cursor-pointer group" onclick="setAppMode(currentAppMode)">
-                    <div class="w-10 h-10 bg-indigo-600 border-2 border-indigo-300 flex items-center justify-center text-amber-300 shadow-[3px_3px_0px_#000] group-hover:bg-amber-400 group-hover:text-slate-950 transition">
-                        <i class="fa-solid fa-user-astronaut text-xl animate-bounce"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-xl tracking-wider text-amber-300 drop-shadow-[2px_2px_0px_#000]">THSS</span>
-                            <span class="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 border border-indigo-400">COSMIC V4.1</span>
-                        </div>
-                        <p class="text-[11px] text-slate-400 font-medium">우주 탐방 과학 포털 & 아케이드</p>
-                    </div>
+    <div class="stars-bg" id="stars-container"></div>
+
+    <!-- Header Banner -->
+    <header class="pixel-card p-4 border-amber-500">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-amber-300 text-2xl shadow-[2px_2px_0px_#000]">
+                    <i class="fa-solid fa-space-shuttle animate-bounce"></i>
                 </div>
-
-                <!-- Global Mission Search -->
-                <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
-                    <div class="relative w-full">
-                        <i class="fa-solid fa-satellite-dish absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
-                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="🔍 탐사 미션 / 우주 게임 검색..." 
-                            class="w-full pl-9 pr-4 py-1.5 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300 placeholder-slate-500 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
-                    </div>
+                <div>
+                    <h1 id="header-portal-title" class="text-lg md:text-xl font-bold text-amber-300">🛸 THSS 우주 과학 탐사 포털</h1>
+                    <p id="header-portal-sub" class="text-xs text-slate-400">T.H Teacher's Science Simulator Hub [V4.4]</p>
                 </div>
+            </div>
 
-                <!-- Controls -->
-                <div class="flex items-center gap-3">
-                    <div id="admin-status-area" class="flex items-center gap-2"></div>
-
-                    <button onclick="openManagerModal()" id="btn-manage-sim" class="hidden flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 border-2 border-amber-200 pixel-btn">
-                        <i class="fa-solid fa-space-shuttle"></i>
-                        <span class="hidden sm:inline">사령부 관리</span>
-                    </button>
-
-                    <button onclick="toggleFavoritesTab()" id="btn-fav-toggle" class="p-2 text-slate-400 hover:text-amber-300 bg-slate-800 border-2 border-slate-700 transition relative pixel-btn" title="즐겨찾기">
-                        <i class="fa-solid fa-star text-sm"></i>
-                        <span id="fav-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-slate-950 font-bold text-[10px] border border-slate-950 flex items-center justify-center">0</span>
-                    </button>
-                </div>
+            <div class="flex items-center gap-2">
+                <span id="db-status-badge" class="px-3 py-1.5 text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400 shadow-[2px_2px_0px_#000]">
+                    DB 연결 확인중...
+                </span>
+                <button onclick="openAdminAuthModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold border-2 border-amber-300 pixel-btn flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-gear"></i> 사령관 모드
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Hero Space Banner -->
-    <section class="relative overflow-hidden bg-slate-900/90 border-b-4 border-slate-800 py-8 md:py-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                
-                <div class="lg:col-span-7 text-center lg:text-left">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-400/50 text-xs font-bold mb-3 shadow-[2px_2px_0px_#000]">
-                        <i class="fa-solid fa-user-astronaut text-sky-400 animate-pulse"></i> TH TEACHER'S SPACE EXPLORER
-                    </div>
-                    <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-wide">
-                        👨‍🚀 우주 대원과 떠나는 <br class="hidden sm:inline">
-                        <span class="text-amber-300 drop-shadow-[2px_2px_0px_#000]">신비한 별 탐사 & 우주 생존 게임</span>
-                    </h1>
-                    <p class="mt-3 text-xs md:text-sm text-slate-300 leading-relaxed max-w-2xl">
-                        우주선을 타고 신비한 별들을 탐방하며 과학 법칙을 실험하는 <span class="text-sky-300 font-bold">[행성 탐사 LAB]</span>과 <br class="hidden md:inline">
-                        우주선 수리 및 탈출 미션에 도전하는 <span class="text-rose-400 font-bold">[우주 탈출 ARCADE]</span> 모드를 선택하세요!
-                    </p>
+    <!-- Centered Cute Announcement Banner (V4.2 Style) -->
+    <section class="pixel-card-glow p-4 text-center space-y-1 relative overflow-hidden">
+        <div class="flex items-center justify-center gap-2 text-amber-300 text-sm md:text-base font-bold">
+            <span>✨ 🧪</span>
+            <span id="center-quote-text">미지의 화합물과 화학 반응의 은하계로 떠나는 과학교사 T.H의 시뮬레이션 탐사 포털!</span>
+            <span>🚀 🌟</span>
+        </div>
+        <p id="center-sub-text" class="text-xs text-sky-300/80">
+            "실험실의 한계를 넘어 미시적 입자 세계와 거시적 수식을 가상 조종석에서 탐구해보세요!"
+        </p>
+    </section>
 
-                    <div class="grid grid-cols-3 gap-3 mt-6 max-w-md mx-auto lg:mx-0">
-                        <div class="space-panel p-2.5 text-center border-sky-500">
-                            <div class="text-lg md:text-xl font-bold text-sky-400" id="stat-count-sim">0</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🪐 등록된 미션</div>
-                        </div>
-                        <div class="space-panel p-2.5 text-center border-amber-500">
-                            <div class="text-lg md:text-xl font-bold text-amber-300">EXPLORE</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🧪 행성 탐사 LAB</div>
-                        </div>
-                        <div class="space-panel p-2.5 text-center border-rose-500">
-                            <div class="text-lg md:text-xl font-bold text-rose-400">SURVIVAL</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-0.5">🚀 우주 탈출 ARCADE</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-5 relative">
-                    <div class="space-panel p-4 bg-slate-950 border-4 border-indigo-900 shadow-[6px_6px_0px_#000] relative">
-                        <div class="flex items-center justify-between border-b-2 border-slate-800 pb-2 mb-3">
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-3 h-3 bg-rose-500 inline-block border border-black"></span>
-                                <span class="w-3 h-3 bg-amber-400 inline-block border border-black"></span>
-                                <span class="w-3 h-3 bg-emerald-400 inline-block border border-black"></span>
-                            </div>
-                            <span class="text-[10px] text-amber-300 font-bold tracking-widest">STATION :: ONLINE</span>
-                        </div>
-
-                        <div class="relative bg-slate-900/90 border-2 border-dashed border-indigo-500/50 p-6 text-center flex flex-col items-center justify-center min-h-[190px]">
-                            <div class="flex items-center justify-center gap-4 text-4xl my-2">
-                                <span class="animate-float" style="animation-delay: 0s;">🪐</span>
-                                <span class="animate-float text-amber-400" style="animation-delay: 0.5s;">👩‍🚀</span>
-                                <span class="animate-float text-sky-400" style="animation-delay: 1.0s;">🚀</span>
-                            </div>
-                            <p class="text-xs text-sky-300 font-bold mt-2" id="sync-status-text">INITIALIZING NETWORK...</p>
-                            <p class="text-[11px] text-slate-400 mt-1">SELECT MISSION MODE BELOW</p>
-                        </div>
-                    </div>
-                </div>
-
+    <!-- Station Overview Dash -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div class="pixel-card p-3 flex items-center justify-between">
+            <div>
+                <div class="text-slate-400">등록된 미션</div>
+                <div id="stat-total-count" class="text-lg font-bold text-sky-300 font-mono mt-0.5">0 개</div>
             </div>
+            <i class="fa-solid fa-rocket text-sky-500 text-xl opacity-60"></i>
+        </div>
+        <div class="pixel-card p-3 flex items-center justify-between">
+            <div>
+                <div class="text-slate-400">탐사 모드 (LAB)</div>
+                <div id="stat-lab-count" class="text-lg font-bold text-amber-300 font-mono mt-0.5">0 개</div>
+            </div>
+            <i class="fa-solid fa-flask text-amber-500 text-xl opacity-60"></i>
+        </div>
+        <div class="pixel-card p-3 flex items-center justify-between">
+            <div>
+                <div class="text-slate-400">우주 탈출 (ARCADE)</div>
+                <div id="stat-arcade-count" class="text-lg font-bold text-rose-300 font-mono mt-0.5">0 개</div>
+            </div>
+            <i class="fa-solid fa-gamepad text-rose-500 text-xl opacity-60"></i>
+        </div>
+        <div class="pixel-card p-3 flex items-center justify-between">
+            <div>
+                <div class="text-slate-400">시스템 접속 상태</div>
+                <div class="text-lg font-bold text-emerald-400 font-mono mt-0.5">STATION 100%</div>
+            </div>
+            <i class="fa-solid fa-signal text-emerald-500 text-xl opacity-60"></i>
         </div>
     </section>
 
-    <!-- Main Content Area -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full flex flex-col">
-
-        <!-- Master Mode Switcher -->
-        <div class="flex justify-center mb-8">
-            <div class="bg-slate-950 p-1.5 flex border-4 border-slate-800 shadow-[6px_6px_0px_#020617] max-w-xl w-full">
-                <button onclick="setAppMode('lab')" id="btn-mode-lab" class="flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-400 hover:text-amber-300">
-                    🪐 행성 탐사 LAB
-                </button>
-                <button onclick="setAppMode('arcade')" id="btn-mode-arcade" class="flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-400 hover:text-amber-300">
-                    🚀 우주 탈출 ARCADE
-                </button>
-            </div>
+    <!-- Main Portal Content -->
+    <main id="portal-home-view" class="space-y-4">
+        <!-- App Mode Switcher Tabs -->
+        <div class="grid grid-cols-2 gap-3 max-w-md mx-auto">
+            <button onclick="switchAppMode('lab')" id="tab-lab" class="py-2.5 px-4 text-xs font-bold bg-sky-600 text-white border-2 border-sky-300 pixel-btn flex items-center justify-center gap-2">
+                <i class="fa-solid fa-globe"></i> 행성 탐사 LAB
+            </button>
+            <button onclick="switchAppMode('arcade')" id="tab-arcade" class="py-2.5 px-4 text-xs font-bold bg-slate-900 text-slate-400 border-2 border-slate-700 hover:text-white pixel-btn flex items-center justify-center gap-2">
+                <i class="fa-solid fa-space-shuttle text-rose-400"></i> 우주 탈출 ARCADE
+            </button>
         </div>
 
-        <!-- Filter Bar (동기화 수정된 카테고리 버튼들) -->
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-            <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0" id="category-pills">
-                <button onclick="filterCategory('all')" class="cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap" data-cat="all">🌟 전체 은하계</button>
-                <button onclick="filterCategory('struct')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-sky-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="struct">🧪 구조와 상호작용</button>
-                <button onclick="filterCategory('reaction')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-rose-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="reaction">🔥 반응과 양적관계</button>
-                <button onclick="filterCategory('equilibrium')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="equilibrium">🌀 속도와 동적평형</button>
-                <button onclick="filterCategory('energy')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-emerald-400 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="energy">⚡ 에너지와 상태변화</button>
-                <button onclick="filterCategory('earth')" class="cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-yellow-300 border-2 border-slate-700 pixel-btn whitespace-nowrap" data-cat="earth">🪐 지구와 우주</button>
-            </div>
-
-            <!-- Difficulty Level Filter -->
-            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-                <span class="text-xs text-slate-400 font-bold hidden sm:inline">대원 난이도:</span>
-                <select id="level-filter" onchange="applyFilters()" class="bg-slate-900 border-2 border-slate-700 text-xs text-amber-300 font-bold p-2 focus:outline-none focus:border-amber-400 shadow-[2px_2px_0px_#000]">
-                    <option value="all">👨‍🚀 모든 미션 난이도 (ALL)</option>
-                    <option value="middle">🌱 견습 탐사대원 (중등)</option>
-                    <option value="high">⚔️ 정예 탐사대원 (고등)</option>
-                    <option value="univ">🏆 사령관 수준 (심화)</option>
-                </select>
-            </div>
+        <!-- Category Pill Filters (4 Categories) -->
+        <div class="flex flex-wrap gap-2 justify-center text-xs pt-2" id="category-pills">
+            <button onclick="filterCategory('all')" id="pill-all" class="pill-btn px-3 py-1.5 bg-sky-500 text-slate-950 font-bold border-2 border-sky-300 pixel-btn">
+                🌟 전체 은하계
+            </button>
+            <button onclick="filterCategory('struct')" id="pill-struct" class="pill-btn px-3 py-1.5 bg-slate-900 text-slate-300 font-bold border-2 border-slate-700 hover:border-sky-400 pixel-btn">
+                🧪 구조와 상호작용
+            </button>
+            <button onclick="filterCategory('reaction')" id="pill-reaction" class="pill-btn px-3 py-1.5 bg-slate-900 text-slate-300 font-bold border-2 border-slate-700 hover:border-amber-400 pixel-btn">
+                🔥 반응과 양적관계
+            </button>
+            <button onclick="filterCategory('equilibrium')" id="pill-equilibrium" class="pill-btn px-3 py-1.5 bg-slate-900 text-slate-300 font-bold border-2 border-slate-700 hover:border-amber-400 pixel-btn">
+                🌀 속도와 동적평형
+            </button>
+            <button onclick="filterCategory('energy')" id="pill-energy" class="pill-btn px-3 py-1.5 bg-slate-900 text-slate-300 font-bold border-2 border-slate-700 hover:border-emerald-400 pixel-btn">
+                ⚡ 에너지와 상태변화
+            </button>
         </div>
 
-        <!-- Content Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="simulator-grid"></div>
-
-        <!-- Empty State Container -->
-        <div id="empty-state" class="hidden text-center py-16 space-panel border-slate-800">
-            <div class="text-4xl mb-3">🛸</div>
-            <h3 class="text-sm font-bold text-slate-300" id="empty-state-title">해당하는 우주 미션이 없습니다</h3>
-            <p class="text-xs text-slate-500 mt-1">검색어나 은하계 카테고리 필터를 변경해 보세요.</p>
+        <!-- Simulator Grid -->
+        <div id="simulators-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+            <!-- Dynamic Mission Cards rendered by JS -->
         </div>
-
     </main>
 
-    <!-- Space Cockpit Workspace Overlay Modal -->
-    <div id="workspace-overlay" class="fixed inset-0 z-50 bg-slate-950 hidden flex flex-col">
-        <div class="h-14 border-b-4 border-slate-800 bg-slate-900 px-4 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <button onclick="closeWorkspace()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border-2 border-slate-700 pixel-btn flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-left"></i> 사령부로 복귀
-                </button>
-                <div class="h-4 w-1 bg-slate-800"></div>
-                <h2 id="ws-title" class="text-sm font-bold text-amber-300 flex items-center gap-2">로딩중...</h2>
-                <span id="ws-category-badge" class="text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-400">카테고리</span>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <button onclick="toggleWSGuidePanel()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-bold border-2 border-slate-700 pixel-btn flex items-center gap-1.5">
-                    <i class="fa-solid fa-book-open"></i>
-                    <span class="hidden sm:inline">미션 브리핑</span>
-                </button>
-                <button onclick="toggleWSFullscreen()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 border-2 border-slate-700 text-xs">
-                    <i class="fa-solid fa-expand"></i>
-                </button>
-                <button onclick="closeWorkspace()" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 border-2 border-slate-700 text-xs">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
-            </div>
+    <!-- Cockpit Interactive Mission Runner Panel -->
+    <main id="cockpit-runner-view" class="hidden flex-1 flex flex-col space-y-3">
+        <div class="flex items-center justify-between bg-slate-900 p-2 border-2 border-slate-700 rounded text-xs">
+            <button onclick="closeCockpit()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold border border-amber-400 pixel-btn flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left"></i> 포털로 귀환
+            </button>
+            <span id="cockpit-title" class="font-bold text-sky-300">미션 조종석 실행 중...</span>
+            <button onclick="reloadCockpitIframe()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600">
+                <i class="fa-solid fa-rotate-right"></i> 재로드
+            </button>
         </div>
 
-        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            <div class="flex-1 bg-black relative flex items-center justify-center overflow-hidden" id="ws-frame-container">
-                <iframe id="ws-iframe" class="w-full h-full border-none" title="Space Cockpit Simulator Workspace"></iframe>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-[550px]">
+            <!-- Main Canvas View (9 Cols) -->
+            <div class="lg:col-span-9 bg-slate-950 border-2 border-slate-800 rounded overflow-hidden flex flex-col">
+                <iframe id="cockpit-frame" class="w-full flex-1 border-none bg-slate-950" title="Simulator Workspace"></iframe>
             </div>
 
-            <div id="ws-side-panel" class="w-full lg:w-80 border-t-4 lg:border-t-0 lg:border-l-4 border-slate-800 bg-slate-900 p-4 overflow-y-auto flex flex-col gap-4">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fa-solid fa-compass text-sky-400"></i> 🪐 미션 개요 및 과학 원리
-                        </h3>
-                        <button onclick="toggleWSGuidePanel()" class="lg:hidden text-slate-400 hover:text-rose-400 text-xs font-bold">
-                            <i class="fa-solid fa-xmark"></i> 닫기
-                        </button>
+            <!-- Briefing Panel (3 Cols) -->
+            <div class="lg:col-span-3 pixel-card p-3 space-y-3 flex flex-col justify-between text-xs">
+                <div class="space-y-3">
+                    <div class="border-b border-slate-800 pb-2">
+                        <span id="cockpit-badge" class="px-2 py-0.5 font-bold text-[10px] bg-sky-500/20 text-sky-300 border border-sky-400">구조와 상호작용</span>
+                        <h3 id="cockpit-sub-title" class="text-sm font-bold text-amber-300 mt-1">미션 수행 조종석</h3>
                     </div>
-                    <p id="ws-description" class="text-xs text-slate-300 leading-relaxed bg-slate-950 p-3 border-2 border-slate-800"></p>
+
+                    <div>
+                        <div class="text-slate-400 text-[10px] font-bold">적용 수식/방정식</div>
+                        <div id="cockpit-formula" class="font-mono text-cyan-300 bg-slate-950 p-2 border border-slate-800 mt-1">P · V = n · R · T</div>
+                    </div>
+
+                    <div>
+                        <div class="text-slate-400 text-[10px] font-bold">👩‍🚀 대원 수행 가이드</div>
+                        <ul id="cockpit-guide-list" class="space-y-1 text-slate-300 mt-1 list-disc list-inside text-[11px]">
+                            <li>가이드에 따라 조작을 진행하세요.</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <div>
-                    <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-square-root-variable text-emerald-400"></i> 📐 적용 물리 방정식
-                    </h3>
-                    <div id="ws-formula" class="text-xs font-mono bg-slate-950 p-3 border-2 border-slate-800 text-sky-300">N/A</div>
+                <div class="p-2 bg-slate-950 border border-slate-800 text-[10px] text-slate-400">
+                    💡 시뮬레이션 이상 발생 시 상단 [재로드] 버튼을 이용하세요.
                 </div>
+            </div>
+        </div>
+    </main>
 
-                <div>
-                    <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-lightbulb text-amber-400"></i> 👩‍🚀 대원 수행 가이드
-                    </h3>
-                    <ul id="ws-guide-list" class="text-xs text-slate-300 space-y-2 list-disc list-inside"></ul>
-                </div>
-
-                <div class="mt-auto pt-4 border-t-2 border-slate-800 text-[11px] text-slate-500 text-center font-bold">
-                    👾 THSS Space Explorer Command System
-                </div>
+    <!-- Admin Auth Password Modal -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="pixel-card-gold p-5 w-full max-w-sm space-y-4">
+            <div class="flex justify-between items-center border-b border-amber-500/30 pb-2">
+                <h2 class="text-sm font-bold text-amber-300"><i class="fa-solid fa-lock"></i> 사령관 인증</h2>
+                <button onclick="closeAdminAuthModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-slate-300">사령관 암호를 입력하여 관리 시스템에 접근하세요.</p>
+            <input type="password" id="admin-pass-input" placeholder="암호 입력 (기본: 1234)" class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-amber-300 text-xs font-mono focus:border-amber-400 outline-none">
+            <div class="flex gap-2">
+                <button onclick="verifyAdminPass()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold pixel-btn">인증 승인</button>
+                <button onclick="closeAdminAuthModal()" class="px-3 py-2 bg-slate-800 text-slate-300 text-xs">취소</button>
             </div>
         </div>
     </div>
 
-    <!-- Admin Mission Command Modal -->
-    <div id="manager-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
-        <div class="space-panel w-full max-w-5xl h-[85vh] flex flex-col relative border-4 border-amber-500 shadow-[8px_8px_0px_#000] bg-slate-900">
-            <div class="flex items-center justify-between p-4 border-b-4 border-slate-800 bg-slate-950">
-                <h2 class="text-lg font-bold text-amber-300 flex items-center gap-2">
-                    <i class="fa-solid fa-space-shuttle text-sky-400"></i> 우주 사령부 미션 대시보드
+    <!-- Admin Management Panel Modal with Quote Banner Editor -->
+    <div id="admin-panel-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="pixel-card p-5 w-full max-w-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h2 class="text-sm font-bold text-sky-300 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> 사령부 미션 통제 센터
                 </h2>
-                <div class="flex items-center gap-3">
-                    <button onclick="openAddEditSimModal()" class="px-4 py-1.5 text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 border-2 border-sky-300 pixel-btn">
-                        <i class="fa-solid fa-plus mr-1"></i> 새 미션 추가
-                    </button>
-                    <button onclick="closeManagerModal()" class="w-8 h-8 flex items-center justify-center bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-500 border-2 border-slate-700 transition">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
+                <div class="flex items-center gap-2">
+                    <span id="modal-db-badge" class="text-[10px] text-amber-400 font-mono">DB 연결 상태 확인중...</span>
+                    <button onclick="closeAdminPanelModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
-            
-            <div class="flex-1 overflow-y-auto p-4">
-                <div class="text-xs text-slate-400 mb-4 bg-slate-950 p-3 border border-slate-800 flex justify-between items-center">
-                    <span>💡 이곳에서 새로 추가하는 미션과 게임은 <span class="text-amber-300 font-bold">전 세계 우주 대원들에게 실시간 동기화</span>됩니다.</span>
-                    <span id="db-status-badge" class="px-2 py-0.5 font-bold bg-slate-800 text-slate-400 border border-slate-700">DB 연결 확인중...</span>
+
+            <!-- Admin Quote / Banner Text Editor Section -->
+            <div class="p-3 bg-slate-950 border-2 border-amber-500/40 rounded space-y-2 text-xs">
+                <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-comment-dots"></i> 📢 포털 대문 중앙 안내 문구 수정
                 </div>
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-950 text-slate-300 border-b-2 border-slate-700">
-                            <th class="p-3 font-bold w-24">모드</th>
-                            <th class="p-3 font-bold w-28">은하계 카테고리</th>
-                            <th class="p-3 font-bold">미션 제목</th>
-                            <th class="p-3 font-bold w-32 text-center">관리</th>
+                <div>
+                    <label class="text-[10px] text-slate-400">메인 중앙 문구 (이모지 포함)</label>
+                    <input type="text" id="input-portal-quote" class="w-full px-2 py-1 bg-slate-900 border border-slate-700 text-amber-200 text-xs mt-0.5">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400">서브 부연 설명</label>
+                    <input type="text" id="input-portal-subquote" class="w-full px-2 py-1 bg-slate-900 border border-slate-700 text-sky-200 text-xs mt-0.5">
+                </div>
+                <button onclick="savePortalQuotes()" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] pixel-btn">
+                    대문 문구 적용하기
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+                <button onclick="openAddEditSimModal(false)" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold border-2 border-emerald-300 pixel-btn flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> 새 미션 추가
+                </button>
+                <button onclick="resetDefaultSimulators()" class="text-xs text-slate-400 hover:text-amber-300 underline">
+                    기본 미션 초기화
+                </button>
+            </div>
+
+            <div class="overflow-x-auto border-2 border-slate-800 rounded">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-900 text-slate-400 font-mono border-b border-slate-800">
+                        <tr>
+                            <th class="p-2.5">모드/카테고리</th>
+                            <th class="p-2.5">미션 제목</th>
+                            <th class="p-2.5">난이도</th>
+                            <th class="p-2.5 text-right">관리</th>
                         </tr>
                     </thead>
-                    <tbody id="manager-table-body"></tbody>
+                    <tbody id="admin-sim-table-body" class="divide-y divide-slate-800 bg-slate-950">
+                        <!-- Table Rows Rendered dynamically -->
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Edit/Add Form Modal (동기화 수정된 드롭다운 옵션) -->
-    <div id="add-modal" class="fixed inset-0 z-50 bg-slate-950/90 hidden flex items-center justify-center p-4">
-        <div class="space-panel w-full max-w-2xl h-[90vh] flex flex-col relative border-4 border-sky-500 shadow-[8px_8px_0px_#000] bg-slate-900">
-            <div class="flex items-center justify-between p-4 border-b-4 border-slate-800 bg-slate-950">
-                <h2 id="form-modal-title" class="text-base font-bold text-sky-400 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square"></i> 미션 에디터
+    <!-- Add / Edit Simulator Modal with Guide Textarea -->
+    <div id="add-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="pixel-card p-5 w-full max-w-xl space-y-3 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h2 id="form-modal-title" class="text-sm font-bold text-amber-300 flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> 새 탐사 미션 등록
                 </h2>
-                <button onclick="closeAddEditSimModal()" class="text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <button onclick="closeAddEditSimModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
-            <form id="add-sim-form" onsubmit="saveSimulatorData(event)" class="flex-1 overflow-y-auto p-5 space-y-4">
+
+            <form onsubmit="saveSimulatorData(event)" class="space-y-3 text-xs">
                 <input type="hidden" id="input-edit-id">
-                
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">미션 / 게임 제목 *</label>
-                    <input type="text" id="input-title" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-white">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">미션 제목 *</label>
+                    <input type="text" id="input-title" required placeholder="예: [LAB] 구리의 산화와 환원 연속 탐사" class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
                 </div>
-                
+
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">포털 모드 *</label>
-                        <select id="input-appmode" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
-                            <option value="lab">🪐 행성 탐사 LAB</option>
+                        <select id="input-appmode" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300">
+                            <option value="lab">🚀 행성 탐사 LAB</option>
                             <option value="arcade">🚀 우주 탈출 ARCADE</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">분야 카테고리 *</label>
-                        <select id="input-category" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
+                        <select id="input-category" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300">
                             <option value="struct">🧪 구조와 상호작용</option>
                             <option value="reaction">🔥 반응과 양적관계</option>
                             <option value="equilibrium">🌀 속도와 동적평형</option>
                             <option value="energy">⚡ 에너지와 상태변화</option>
-                            <option value="earth">🪐 지구와 우주</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">대원 난이도 *</label>
-                        <select id="input-level" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-300">
-                            <option value="middle">🌱 견습 (중등)</option>
-                            <option value="high">⚔️ 정예 (고등)</option>
-                            <option value="univ">🏆 사령관 (심화)</option>
+                        <select id="input-level" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300">
+                            <option value="middle">견습 (중등)</option>
+                            <option value="high" selected>정예 (고등)</option>
+                            <option value="univ">사령관 (심화)</option>
                         </select>
                     </div>
                 </div>
-                
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">미션 개요 및 설명 *</label>
-                    <textarea id="input-desc" rows="2" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-white"></textarea>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">간략 개요</label>
+                    <input type="text" id="input-desc" placeholder="실험의 핵심 탐구 요약을 입력하세요." class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-slate-200">
                 </div>
-                
+
                 <div>
                     <label class="block text-xs font-bold text-slate-300 mb-1">적용 방정식/수식</label>
-                    <input type="text" id="input-formula" class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300">
+                    <input type="text" id="input-formula" placeholder="예: 2Cu + O₂ ➔ 2CuO" class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-sky-300 font-mono">
                 </div>
                 
-                <div class="flex-1 flex flex-col min-h-[200px]">
-                    <label class="block text-xs font-bold text-slate-300 mb-1">HTML 소스 코드 (또는 iframe URL) *</label>
-                    <textarea id="input-html" required class="w-full flex-1 min-h-[200px] px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs font-mono text-emerald-300 whitespace-pre scrollbar-thin"></textarea>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">👩‍🚀 대원 수행 가이드 (각 항목을 줄바꿈으로 입력)</label>
+                    <textarea id="input-guide" rows="3" placeholder="예:&#10;1. 겉불꽃에 구리 망을 넣고 색상 변화를 관찰하세요.&#10;2. 속불꽃으로 이동시켜 원래 구리로 환원시키세요." class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-amber-200 leading-relaxed"></textarea>
                 </div>
-                
-                <div class="flex justify-end gap-2 pt-4 border-t-2 border-slate-800">
-                    <button type="button" onclick="closeAddEditSimModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold border-2 border-slate-700 pixel-btn">취소</button>
-                    <button type="submit" class="px-5 py-2 bg-sky-500 text-slate-950 text-xs font-bold border-2 border-sky-200 pixel-btn">저장하기</button>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">HTML 소스 코드 (또는 URL) *</label>
+                    <textarea id="input-html" rows="5" required placeholder="<!DOCTYPE html>... 단일 HTML 코드를 여기에 붙여넣으세요." class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-emerald-300 font-mono"></textarea>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold pixel-btn">저장 및 게시하기</button>
+                    <button type="button" onclick="closeAddEditSimModal()" class="px-4 py-2 bg-slate-800 text-slate-300">취소</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Admin Login Modals -->
-    <div id="admin-login-modal" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
-        <div class="space-panel w-full max-w-sm p-6 text-center border-4 border-amber-400 relative">
-            <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="w-12 h-12 mx-auto mb-3 bg-amber-400 text-slate-950 border-2 border-amber-200 flex items-center justify-center text-2xl">🔑</div>
-            <h2 class="text-base font-bold text-amber-300 mb-1">COMMANDER ACCESS</h2>
-            <form onsubmit="handleAdminLogin(event)" class="space-y-3 mt-4">
-                <input type="password" id="admin-password-input" placeholder="비밀번호 입력" required class="w-full px-3 py-2 bg-slate-950 border-2 border-slate-700 text-xs text-center text-amber-300 font-mono">
-                <div id="login-error-msg" class="text-[11px] text-rose-400 font-bold hidden">비밀번호가 일치하지 않습니다!</div>
-                <button type="submit" class="w-full py-2 pixel-btn-amber text-xs font-bold">UNLOCK COMMAND</button>
-            </form>
-        </div>
-    </div>
+    <!-- Footer with Copyright -->
+    <footer class="pixel-card p-3 text-center text-[11px] text-slate-400 space-y-1">
+        <div>THSS Space Exploration Portal &copy; 2026 T.H Science Education. All Rights Reserved.</div>
+        <div class="text-[10px] text-slate-500">Designed for Science Educators & Future Explorers with Interactive Physics/Chemistry Simulations.</div>
+    </footer>
 
     <script>
-        const DEFAULT_ADMIN_PIN = "1234";
-
         // =========================================================================
-        // 🔥 구글 파이어베이스(Firebase) 실시간 DB 연동 키
+        // 🔥 1. 구글 파이어베이스(Firebase) DB 키 연동 설정 구문 (여기 작성하세요!)
         // =========================================================================
+        // 파이어베이스 콘솔(console.firebase.google.com)에서 발급받은 키를 아래 "" 큰따옴표 안에 입력하세요!
        const firebaseConfig = {
   apiKey: "AIzaSyCIVdzSumEKJr57nIBr7vK0tVEuTRbZHTw",
   authDomain: "thss-portal.firebaseapp.com",
@@ -465,272 +411,395 @@
 };
 
         let db = null;
-        let firebaseSimulators = [];
-        let favorites = [];
+        let isFirebaseOnline = false;
 
-        // 동기화된 기본 시뮬레이터 목록
+        function initFirebase() {
+            const statusBadge = document.getElementById('db-status-badge');
+            const modalBadge = document.getElementById('modal-db-badge');
+
+            // Firebase Config key checking
+            if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.apiKey !== "") {
+                try {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    db = firebase.firestore();
+                    isFirebaseOnline = true;
+
+                    if (statusBadge) {
+                        statusBadge.textContent = "COSMIC CLOUD :: ONLINE";
+                        statusBadge.className = "px-3 py-1.5 text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-400 shadow-[2px_2px_0px_#000]";
+                    }
+                    if (modalBadge) {
+                        modalBadge.textContent = "🟢 실시간 구글 DB 연동 중";
+                        modalBadge.className = "text-[10px] text-emerald-400 font-mono";
+                    }
+
+                    // Listen for real-time Firestore updates
+                    subscribeToFirestore();
+                } catch (e) {
+                    console.warn("Firebase initialize error:", e);
+                    fallbackToLocalStorage("⚠️ DB 권한/설정 에러 (로컬 작동 중)");
+                }
+            } else {
+                fallbackToLocalStorage("🔴 DB 키 미입력 (로컬 저장소 작동)");
+            }
+        }
+
+        function fallbackToLocalStorage(statusText) {
+            isFirebaseOnline = false;
+            db = null;
+
+            const statusBadge = document.getElementById('db-status-badge');
+            const modalBadge = document.getElementById('modal-db-badge');
+
+            if (statusBadge) {
+                statusBadge.textContent = "LOCAL STORAGE :: ACTIVE";
+                statusBadge.className = "px-3 py-1.5 text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400 shadow-[2px_2px_0px_#000]";
+            }
+            if (modalBadge) {
+                modalBadge.textContent = statusText || "🔴 로컬 저장소 모드 (비연동)";
+                modalBadge.className = "text-[10px] text-amber-400 font-mono";
+            }
+
+            // Load LocalStorage fallback data
+            const localData = localStorage.getItem('thss_simulators');
+            if (localData) {
+                try {
+                    simulators = JSON.parse(localData);
+                } catch(e) {
+                    simulators = [...defaultSimulators];
+                }
+            } else {
+                simulators = [...defaultSimulators];
+                saveToLocalStorage();
+            }
+            renderSimulators();
+            updateStats();
+        }
+
+        function subscribeToFirestore() {
+            if (!db) return;
+
+            db.collection("simulators").onSnapshot((snapshot) => {
+                const fetched = [];
+                snapshot.forEach((doc) => {
+                    fetched.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (fetched.length > 0) {
+                    simulators = fetched;
+                } else {
+                    // Seed initial default simulators to Firestore if empty
+                    defaultSimulators.forEach(sim => {
+                        db.collection("simulators").doc(sim.id).set(sim);
+                    });
+                    simulators = [...defaultSimulators];
+                }
+
+                renderSimulators();
+                updateStats();
+                renderAdminTable();
+            }, (error) => {
+                console.error("Firestore onSnapshot error:", error);
+                fallbackToLocalStorage("⚠️ DB 접근 권한 에러 (테스트 모드 필요)");
+            });
+        }
+
+        // Starry Background Generator
+        function createStarryBackground() {
+            const container = document.getElementById('stars-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const count = 70;
+            for(let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2.5 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+                container.appendChild(star);
+            }
+        }
+
+        // Custom Default Portal Announcement Quote Text
+        let portalQuoteSettings = {
+            main: "미지의 화합물과 화학 반응의 은하계로 떠나는 과학교사 T.H의 시뮬레이션 탐사 포털!",
+            sub: '"실험실의 한계를 넘어 미시적 입자 세계와 거시적 수식을 가상 조종석에서 탐구해보세요!"'
+        };
+
+        // Default Simulators Catalog
         const defaultSimulators = [
             {
-                id: 'planet-gas-sim-default',
+                id: 'space-sim-1',
                 appMode: 'lab',
-                title: '🪐 [가스 행성] 기체 법칙 & 대기압 탐사',
+                title: '[LAB] 이상 기체 법칙 시뮬레이터',
                 category: 'energy',
                 categoryName: '에너지와 상태변화',
                 level: 'high',
                 levelName: '정예 (고등)',
                 badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-400',
-                icon: 'fa-solid fa-globe text-emerald-400',
-                description: '미지의 가스 거대 행성에 착륙했습니다! 기체 상태 방정식(PV = nRT)을 바탕으로 대기 입자의 운동과 압력, 온도 변동을 관측하세요.',
+                icon: 'fa-solid fa-globe text-sky-400',
+                description: '기체 상태 방정식(PV = nRT)에 따른 입자 거동 및 압력, 부피, 온도 상호작용 관찰.',
                 formula: 'P · V = n · R · T',
                 guideList: [
-                    '행성의 대기 온도(T)를 조절하며 입자 충돌 속도 변화를 관찰하세요.',
-                    '부피(V)를 조절하며 기체 압력(P) 도표 궤적을 기록해보세요.'
+                    '온도(T)와 부피(V) 변수를 조정하며 압력을 측정하세요.',
+                    '등온, 등압, 등적 열역학 모드별 PV 그래프 변화를 확인하세요.'
                 ],
-                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#38bdf8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🪐 가스 행성 탐사 시뮬레이터 준비 완료</h1><p>관리자 페이지에서 실제 시뮬레이터 코드를 언제든지 등록할 수 있습니다.</p></div></body></html>`
+                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script></head><body class="bg-slate-950 text-white p-6 font-mono"><h1 class="text-xl text-cyan-400 font-bold mb-2">이상 기체 시뮬레이터 실행 완료</h1><p class="text-xs text-slate-300">이상 기체 상태 방정식 시뮬레이션 코드 영역입니다.</p></body></html>`
             },
             {
-                id: 'copper-redox-sim-default',
+                id: 'space-sim-2',
                 appMode: 'lab',
-                title: '🧪 [화학 실험] 구리의 산화와 환원 연속 탐사 LAB',
+                title: '구리의 산화와 환원 연속 탐사 LAB',
                 category: 'reaction',
                 categoryName: '반응과 양적관계',
-                level: 'middle',
-                levelName: '견습 (중등)',
+                level: 'high',
+                levelName: '정예 (고등)',
                 badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-400',
-                icon: 'fa-solid fa-vial text-rose-400',
-                description: '구리를 가열하여 검은색 산화 구리(II)로 변환시키고, 탄소를 넣어 다시 붉은색 구리로 환원시키는 연속 반응을 실험해 보세요.',
-                formula: '2Cu + O₂ ➔ 2CuO / 2CuO + C ➔ 2Cu + CO₂↑',
+                icon: 'fa-solid fa-globe text-sky-400',
+                description: '겉불꽃과 속불꽃에서의 구리의 산화 및 환원 반응 연속 실습.',
+                formula: '2Cu + O₂ ➔ 2CuO / CuO + CO ➔ Cu + CO₂',
                 guideList: [
-                    '가열 시작을 눌러 반응 시간을 측정하세요.',
-                    '탄소(C)를 투입하여 산화 구리가 다시 붉은 구리로 환원되는 과정을 질량 그래프로 확인하세요.'
+                    '겉불꽃 버튼을 눌러 구리를 검은색 산화 구리로 산화시키세요.',
+                    '속불꽃 버튼을 눌러 일산화 탄소 반응으로 붉은 구리로 환원시키세요.'
                 ],
-                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#030712;color:#f43f5e;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}</style></head><body><div><h1>🧪 구리의 산화-환원 반응 준비 완료</h1><p>사령부 관리에서 코드를 복사하여 저장해 보세요.</p></div></body></html>`
+                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script></head><body class="bg-slate-950 text-white p-6 font-mono"><h1 class="text-xl text-amber-400 font-bold mb-2">구리 산화-환원 반응 LAB</h1><p class="text-xs text-slate-300">구리의 산화 환원 반응 시뮬레이션 코드 영역입니다.</p></body></html>`
+            },
+            {
+                id: 'space-sim-3',
+                appMode: 'lab',
+                title: '증기 압력과 분자 간의 힘 시뮬레이터',
+                category: 'struct',
+                categoryName: '구조와 상호작용',
+                level: 'high',
+                levelName: '정예 (고등)',
+                badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-400',
+                icon: 'fa-solid fa-globe text-sky-400',
+                description: '다이에틸에테르, 에탄올, 물, 아세트산의 분자 간 인력 및 증기 압력 곡선 비교.',
+                formula: 'P_vap vs Temperature (Clausius-Clapeyron)',
+                guideList: [
+                    '실험 시료를 선택하고 계의 온도를 변화시켜 보세요.',
+                    '외부 대기압 가이드라인과 증기압 곡선의 교점에서 끓는점을 찾으세요.'
+                ],
+                code: `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"><\/script></head><body class="bg-slate-950 text-white p-6 font-mono"><h1 class="text-xl text-sky-400 font-bold mb-2">증기 압력 시뮬레이터 실행 완료</h1><p class="text-xs text-slate-300">증기 압력 곡선 탐구 영역입니다.</p></body></html>`
             }
         ];
 
-        let simulators = [...defaultSimulators];
-        let currentAppMode = 'lab';
-        let currentCategory = 'all';
-        let currentLevel = 'all';
-        let searchQuery = '';
-        let isAdmin = false;
-        let currentEditId = null;
-
-        function getAdminPin() {
-            return localStorage.getItem('thss_admin_pin') || DEFAULT_ADMIN_PIN;
-        }
+        let simulators = [];
+        let activeAppMode = 'lab';
+        let activeCategory = 'all';
 
         function initApp() {
-            if (sessionStorage.getItem('thss_is_admin') === 'true') {
-                isAdmin = true;
+            createStarryBackground();
+
+            // Load Custom Portal Banner Quotes
+            const savedQuote = localStorage.getItem('thss_portal_quotes');
+            if (savedQuote) {
+                try {
+                    portalQuoteSettings = JSON.parse(savedQuote);
+                } catch(e) {}
             }
+            renderPortalQuotes();
 
-            const localFavs = localStorage.getItem('thss_favorites');
-            if (localFavs) {
-                try { favorites = JSON.parse(localFavs); } catch(e) { favorites = []; }
-            }
-
-            fallbackToLocal();
-            updateAdminUI();
-            updateFavBadge();
-            setAppMode('lab');
-
+            // Initialize Firebase connection or fallback to LocalStorage
             initFirebase();
         }
 
-        function initFirebase() {
-            const badge = document.getElementById('db-status-badge');
-            const syncText = document.getElementById('sync-status-text');
+        function renderPortalQuotes() {
+            document.getElementById('center-quote-text').textContent = portalQuoteSettings.main;
+            document.getElementById('center-sub-text').textContent = portalQuoteSettings.sub;
+            document.getElementById('input-portal-quote').value = portalQuoteSettings.main;
+            document.getElementById('input-portal-subquote').value = portalQuoteSettings.sub;
+        }
 
-            if (typeof firebaseConfig === 'undefined' || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes('...')) {
-                if (badge) {
-                    badge.textContent = '🔴 DB 키 미입력 (로컬 저장소 작동)';
-                    badge.className = 'px-2 py-0.5 font-bold bg-rose-950 text-rose-300 border border-rose-800';
-                }
-                if (syncText) {
-                    syncText.textContent = 'LOCAL STORAGE :: ACTIVE';
-                    syncText.className = 'text-xs text-amber-400 font-bold mt-2';
-                }
+        function savePortalQuotes() {
+            const mainQuote = document.getElementById('input-portal-quote').value.trim();
+            const subQuote = document.getElementById('input-portal-subquote').value.trim();
+
+            if (mainQuote) portalQuoteSettings.main = mainQuote;
+            if (subQuote) portalQuoteSettings.sub = subQuote;
+
+            localStorage.setItem('thss_portal_quotes', JSON.stringify(portalQuoteSettings));
+            renderPortalQuotes();
+            alert('대문 중앙 문구가 변경되었습니다!');
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('thss_simulators', JSON.stringify(simulators));
+        }
+
+        function switchAppMode(mode) {
+            activeAppMode = mode;
+            const tabLab = document.getElementById('tab-lab');
+            const tabArcade = document.getElementById('tab-arcade');
+
+            if (mode === 'lab') {
+                tabLab.className = "py-2.5 px-4 text-xs font-bold bg-sky-600 text-white border-2 border-sky-300 pixel-btn flex items-center justify-center gap-2";
+                tabArcade.className = "py-2.5 px-4 text-xs font-bold bg-slate-900 text-slate-400 border-2 border-slate-700 hover:text-white pixel-btn flex items-center justify-center gap-2";
+            } else {
+                tabArcade.className = "py-2.5 px-4 text-xs font-bold bg-rose-600 text-white border-2 border-rose-300 pixel-btn flex items-center justify-center gap-2";
+                tabLab.className = "py-2.5 px-4 text-xs font-bold bg-slate-900 text-slate-400 border-2 border-slate-700 hover:text-white pixel-btn flex items-center justify-center gap-2";
+            }
+
+            renderSimulators();
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.pill-btn').forEach(btn => {
+                btn.className = "pill-btn px-3 py-1.5 bg-slate-900 text-slate-300 font-bold border-2 border-slate-700 hover:border-sky-400 pixel-btn";
+            });
+
+            const targetPill = document.getElementById(`pill-${cat}`);
+            if (targetPill) {
+                targetPill.className = "pill-btn px-3 py-1.5 bg-sky-500 text-slate-950 font-bold border-2 border-sky-300 pixel-btn";
+            }
+
+            renderSimulators();
+        }
+
+        function renderSimulators() {
+            const grid = document.getElementById('simulators-grid');
+            grid.innerHTML = '';
+
+            const filtered = simulators.filter(s => {
+                const matchMode = s.appMode === activeAppMode;
+                const matchCat = activeCategory === 'all' || s.category === activeCategory;
+                return matchMode && matchCat;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 pixel-card text-slate-400 text-xs">
+                        <i class="fa-solid fa-ghost text-3xl mb-2 text-slate-600"></i>
+                        <div>해당 영역에 등록된 탐사 미션이 없습니다.</div>
+                    </div>
+                `;
                 return;
             }
 
-            if (!window.firebaseImports || !window.firebaseImports.initializeApp) {
-                setTimeout(initFirebase, 200);
-                return;
-            }
+            filtered.forEach(sim => {
+                const card = document.createElement('div');
+                card.className = "pixel-card p-4 flex flex-col justify-between space-y-3 hover:border-sky-400 transition";
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="px-2 py-0.5 font-bold text-[10px] border ${sim.badgeColor}">${sim.categoryName}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">${sim.levelName}</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+                            <i class="${sim.icon}"></i> ${sim.title}
+                        </h3>
+                        <p class="text-xs text-slate-300 line-clamp-2 leading-relaxed">${sim.description || '미션 가이드에 따라 실험을 진행하세요.'}</p>
+                        ${sim.formula ? `<div class="font-mono text-[11px] text-sky-300 bg-slate-950 p-1.5 border border-slate-800">√ ${sim.formula}</div>` : ''}
+                    </div>
 
-            try {
-                const app = window.firebaseImports.initializeApp(firebaseConfig);
-                db = window.firebaseImports.getFirestore(app);
-                listenToSimulators();
-            } catch(e) {
-                console.error("Firebase 초기화 에러:", e);
-                if (badge) {
-                    badge.textContent = '🔴 DB 설정 오류 (로컬 모드)';
-                    badge.className = 'px-2 py-0.5 font-bold bg-rose-950 text-rose-300 border border-rose-800';
-                }
-            }
-        }
-
-        function listenToSimulators() {
-            if (!db) return;
-            const badge = document.getElementById('db-status-badge');
-            const syncText = document.getElementById('sync-status-text');
-
-            try {
-                const colRef = window.firebaseImports.collection(db, 'simulators');
-                window.firebaseImports.onSnapshot(colRef, (snapshot) => {
-                    firebaseSimulators = [];
-                    snapshot.forEach(doc => {
-                        firebaseSimulators.push(doc.data());
-                    });
-
-                    if (badge) {
-                        badge.textContent = '🟢 실시간 구글 DB 연동 중';
-                        badge.className = 'px-2 py-0.5 font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
-                    }
-                    if (syncText) {
-                        syncText.textContent = 'COSMIC CLOUD :: ONLINE';
-                        syncText.className = 'text-xs text-emerald-400 font-bold mt-2';
-                    }
-
-                    mergeSimulators();
-                }, (error) => {
-                    console.error("Firestore 수신 에러:", error);
-                    if (badge) {
-                        badge.textContent = '⚠️ DB 권한 에러 (테스트 모드 필요)';
-                        badge.className = 'px-2 py-0.5 font-bold bg-amber-950 text-amber-300 border border-amber-800';
-                    }
-                    if (syncText) {
-                        syncText.textContent = 'ACCESS DENIED :: TEST MODE NEEDED';
-                        syncText.className = 'text-xs text-rose-400 font-bold mt-2';
-                    }
-                    fallbackToLocal();
-                });
-            } catch(e) {
-                fallbackToLocal();
-            }
-        }
-
-        function fallbackToLocal() {
-            let allSims = localStorage.getItem('thss_all_sims');
-            if (!allSims) {
-                simulators = [...defaultSimulators];
-                localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
-            } else {
-                try { 
-                    simulators = JSON.parse(allSims); 
-                    if (!Array.isArray(simulators) || simulators.length === 0) {
-                        simulators = [...defaultSimulators];
-                    }
-                } catch(e) { 
-                    simulators = [...defaultSimulators]; 
-                }
-            }
-            renderSimulators();
-            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
-                renderManagerTable();
-            }
-        }
-
-        function mergeSimulators() {
-            if (firebaseSimulators.length > 0) {
-                simulators = firebaseSimulators;
-            } else {
-                simulators = [...defaultSimulators];
-            }
-            
-            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
-                renderManagerTable();
-            }
-            renderSimulators();
-        }
-
-        function updateAdminUI() {
-            const adminStatusArea = document.getElementById('admin-status-area');
-            const btnManageSim = document.getElementById('btn-manage-sim');
-
-            if (isAdmin) {
-                adminStatusArea.innerHTML = `
-                    <span class="text-[11px] font-bold px-2 py-1 bg-amber-400 text-slate-950 border border-amber-200 flex items-center gap-1 shadow-[2px_2px_0px_#000]">
-                        <i class="fa-solid fa-user-shield"></i> <span class="hidden sm:inline">COMMANDER</span>
-                    </span>
-                    <button onclick="logoutAdmin()" class="p-1.5 text-slate-300 hover:text-rose-400 bg-slate-800 border-2 border-slate-700 transition text-xs" title="로그아웃">
-                        <i class="fa-solid fa-right-from-bracket"></i>
+                    <button onclick="launchCockpit('${sim.id}')" class="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold border-2 border-sky-300 pixel-btn flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i> PLANET EXPLORE
                     </button>
                 `;
-                btnManageSim.classList.remove('hidden');
+                grid.appendChild(card);
+            });
+        }
+
+        function launchCockpit(id) {
+            const sim = simulators.find(s => s.id === id);
+            if (!sim) return;
+
+            document.getElementById('portal-home-view').classList.add('hidden');
+            document.getElementById('cockpit-runner-view').classList.remove('hidden');
+
+            document.getElementById('cockpit-title').textContent = sim.title;
+            document.getElementById('cockpit-sub-title').textContent = sim.title;
+            document.getElementById('cockpit-badge').textContent = sim.categoryName;
+            document.getElementById('cockpit-formula').textContent = sim.formula || '적용 수식 없음';
+
+            const guideListElem = document.getElementById('cockpit-guide-list');
+            guideListElem.innerHTML = '';
+
+            const guides = (sim.guideList && Array.isArray(sim.guideList) && sim.guideList.length > 0) 
+                ? sim.guideList 
+                : ['우주 대원 가이드에 따라 미션을 수행하세요.'];
+
+            guides.forEach(g => {
+                const li = document.createElement('li');
+                li.textContent = g;
+                guideListElem.appendChild(li);
+            });
+
+            const frame = document.getElementById('cockpit-frame');
+            frame.srcdoc = sim.code;
+        }
+
+        function closeCockpit() {
+            document.getElementById('cockpit-runner-view').classList.add('hidden');
+            document.getElementById('portal-home-view').classList.remove('hidden');
+            document.getElementById('cockpit-frame').srcdoc = '';
+        }
+
+        function reloadCockpitIframe() {
+            const frame = document.getElementById('cockpit-frame');
+            const doc = frame.srcdoc;
+            frame.srcdoc = '';
+            setTimeout(() => { frame.srcdoc = doc; }, 50);
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total-count').textContent = `${simulators.length} 개`;
+            document.getElementById('stat-lab-count').textContent = `${simulators.filter(s => s.appMode === 'lab').length} 개`;
+            document.getElementById('stat-arcade-count').textContent = `${simulators.filter(s => s.appMode === 'arcade').length} 개`;
+        }
+
+        function openAdminAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('admin-pass-input').focus();
+        }
+
+        function closeAdminAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('admin-pass-input').value = '';
+        }
+
+        function verifyAdminPass() {
+            const pass = document.getElementById('admin-pass-input').value;
+            if (pass === '1234' || pass === 'admin') {
+                closeAdminAuthModal();
+                openAdminPanelModal();
             } else {
-                adminStatusArea.innerHTML = `
-                    <button onclick="openAdminLoginModal()" class="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 border-2 border-slate-700 transition flex items-center gap-1.5 pixel-btn">
-                        <i class="fa-solid fa-lock text-[10px]"></i> 사령관 모드
-                    </button>
-                `;
-                btnManageSim.classList.add('hidden');
+                alert('사령관 암호가 일치하지 않습니다. (기본: 1234)');
             }
         }
 
-        function openAdminLoginModal() {
-            document.getElementById('admin-password-input').value = '';
-            document.getElementById('login-error-msg').classList.add('hidden');
-            document.getElementById('admin-login-modal').classList.remove('hidden');
+        function openAdminPanelModal() {
+            document.getElementById('admin-panel-modal').classList.remove('hidden');
+            renderAdminTable();
         }
 
-        function closeAdminLoginModal() {
-            document.getElementById('admin-login-modal').classList.add('hidden');
+        function closeAdminPanelModal() {
+            document.getElementById('admin-panel-modal').classList.add('hidden');
         }
 
-        function handleAdminLogin(e) {
-            e.preventDefault();
-            const pwd = document.getElementById('admin-password-input').value;
-            if (pwd === getAdminPin()) {
-                isAdmin = true;
-                sessionStorage.setItem('thss_is_admin', 'true');
-                closeAdminLoginModal();
-                updateAdminUI();
-                renderSimulators();
-            } else {
-                document.getElementById('login-error-msg').classList.remove('hidden');
-            }
-        }
-
-        function logoutAdmin() {
-            isAdmin = false;
-            sessionStorage.removeItem('thss_is_admin');
-            updateAdminUI();
-            renderSimulators();
-            closeManagerModal();
-        }
-
-        function openManagerModal() {
-            if (!isAdmin) return;
-            renderManagerTable();
-            document.getElementById('manager-modal').classList.remove('hidden');
-        }
-
-        function closeManagerModal() {
-            document.getElementById('manager-modal').classList.add('hidden');
-        }
-
-        function renderManagerTable() {
-            const tbody = document.getElementById('manager-table-body');
-            if(!tbody) return;
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-sim-table-body');
             tbody.innerHTML = '';
-            
+
             simulators.forEach(sim => {
                 const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition";
+                tr.className = "hover:bg-slate-900";
                 tr.innerHTML = `
-                    <td class="p-3">
-                        <span class="px-2 py-1 rounded text-[10px] font-bold ${sim.appMode === 'arcade' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-sky-500/20 text-sky-400 border border-sky-500/50'}">
-                            ${sim.appMode === 'arcade' ? 'ARCADE' : 'LAB'}
-                        </span>
+                    <td class="p-2.5">
+                        <span class="px-1.5 py-0.5 text-[10px] ${sim.badgeColor}">${sim.categoryName}</span>
                     </td>
-                    <td class="p-3 text-slate-300 font-bold">${sim.categoryName || '일반'}</td>
-                    <td class="p-3 text-amber-300 font-bold truncate max-w-xs">${sim.title}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="editSimulator('${sim.id}')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded mr-1 transition"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteSimulatorFromManager('${sim.id}')" class="px-2 py-1 bg-rose-900/50 hover:bg-rose-600 text-rose-300 hover:text-white rounded border border-rose-800 transition"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-2.5 font-bold text-amber-300">${sim.title}</td>
+                    <td class="p-2.5 text-slate-400">${sim.levelName}</td>
+                    <td class="p-2.5 text-right space-x-1">
+                        <button onclick="editSimulator('${sim.id}')" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSimulator('${sim.id}')" class="px-2 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -738,13 +807,19 @@
         }
 
         function openAddEditSimModal(isEdit = false) {
-            document.getElementById('add-modal').classList.remove('hidden');
             if (!isEdit) {
-                currentEditId = null;
-                document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-plus-circle"></i> 새 우주 미션 등록';
-                document.getElementById('add-sim-form').reset();
+                document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-plus"></i> 새 탐사 미션 등록';
                 document.getElementById('input-edit-id').value = '';
+                document.getElementById('input-title').value = '';
+                document.getElementById('input-appmode').value = 'lab';
+                document.getElementById('input-category').value = 'struct';
+                document.getElementById('input-level').value = 'high';
+                document.getElementById('input-desc').value = '';
+                document.getElementById('input-formula').value = '';
+                document.getElementById('input-guide').value = '';
+                document.getElementById('input-html').value = '';
             }
+            document.getElementById('add-modal').classList.remove('hidden');
         }
 
         function closeAddEditSimModal() {
@@ -754,22 +829,21 @@
         function editSimulator(id) {
             const sim = simulators.find(s => s.id === id);
             if (!sim) return;
-            
-            currentEditId = id;
+
             document.getElementById('form-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> 미션 수정';
             document.getElementById('input-edit-id').value = id;
             document.getElementById('input-title').value = sim.title;
             document.getElementById('input-appmode').value = sim.appMode || 'lab';
             document.getElementById('input-category').value = sim.category;
             document.getElementById('input-level').value = sim.level;
-            document.getElementById('input-desc').value = sim.description;
+            document.getElementById('input-desc').value = sim.description || '';
             document.getElementById('input-formula').value = sim.formula || '';
+            document.getElementById('input-guide').value = (sim.guideList && Array.isArray(sim.guideList)) ? sim.guideList.join('\n') : '';
             document.getElementById('input-html').value = sim.code;
-            
+
             openAddEditSimModal(true);
         }
 
-        // 동기화된 데이터 저장 로직
         function saveSimulatorData(e) {
             e.preventDefault();
 
@@ -779,312 +853,107 @@
             const level = document.getElementById('input-level').value;
             const desc = document.getElementById('input-desc').value.trim();
             const formula = document.getElementById('input-formula').value.trim();
+            const guideRaw = document.getElementById('input-guide').value.trim();
             let code = document.getElementById('input-html').value.trim();
             const editId = document.getElementById('input-edit-id').value;
 
-            // 완벽하게 동기화된 카테고리 명칭 매핑
+            const guideList = guideRaw ? guideRaw.split('\n').map(g => g.trim()).filter(g => g.length > 0) : ['우주 대원 가이드에 따라 미션을 수행하세요.'];
+
             const catNames = { 
                 struct: '구조와 상호작용',
                 reaction: '반응과 양적관계', 
                 equilibrium: '속도와 동적평형', 
-                energy: '에너지와 상태변화', 
-                earth: '지구와 우주'
+                energy: '에너지와 상태변화'
             };
             const catBadges = {
                 struct: 'bg-sky-500/20 text-sky-300 border-sky-400',
                 reaction: 'bg-rose-500/20 text-rose-300 border-rose-400',
                 equilibrium: 'bg-amber-500/20 text-amber-300 border-amber-400',
-                energy: 'bg-emerald-500/20 text-emerald-300 border-emerald-400',
-                earth: 'bg-yellow-500/20 text-yellow-300 border-yellow-400'
+                energy: 'bg-emerald-500/20 text-emerald-300 border-emerald-400'
             };
             const levelNames = { middle: '견습 (중등)', high: '정예 (고등)', univ: '사령관 (심화)' };
-            
+
             if (code.startsWith('http://') || code.startsWith('https://')) {
                 code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>html,body,iframe{width:100%;height:100%;margin:0;padding:0;border:none;overflow:hidden;}</style></head><body><iframe src="${code}"></iframe></body></html>`;
             }
 
-            let targetSim = null;
+            const targetId = editId || ('space-sim-' + Date.now());
+            const simData = {
+                id: targetId,
+                appMode: appMode,
+                title: titleInput,
+                category: category,
+                categoryName: catNames[category] || '일반 탐사',
+                level: level,
+                levelName: levelNames[level],
+                badgeColor: catBadges[category] || 'bg-sky-500/20 text-sky-300 border-sky-400',
+                icon: appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400',
+                description: desc,
+                formula: formula,
+                guideList: guideList,
+                code: code
+            };
 
-            if (editId) {
-                targetSim = simulators.find(s => s.id === editId);
-                if (targetSim) {
-                    targetSim.appMode = appMode;
-                    targetSim.title = titleInput;
-                    targetSim.category = category;
-                    targetSim.categoryName = catNames[category] || '일반 탐사';
-                    targetSim.level = level;
-                    targetSim.levelName = levelNames[level];
-                    targetSim.badgeColor = catBadges[category] || 'bg-sky-500/20 text-sky-300 border-sky-400';
-                    targetSim.icon = appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400';
-                    targetSim.description = desc;
-                    targetSim.formula = formula;
-                    targetSim.code = code;
+            if (isFirebaseOnline && db) {
+                // Save directly to Google Firestore Database
+                db.collection("simulators").doc(targetId).set(simData).then(() => {
+                    alert("✅ 구글 파이어베이스 클라우드 DB에 즉시 등록되었습니다!");
+                }).catch(err => {
+                    console.error("Firestore save error:", err);
+                    alert("⚠️ DB 저장 오류가 발생하여 로컬에 저장되었습니다.");
+                });
+            } else {
+                if (editId) {
+                    const idx = simulators.findIndex(s => s.id === editId);
+                    if (idx !== -1) simulators[idx] = simData;
+                } else {
+                    simulators.push(simData);
                 }
-            } else {
-                targetSim = {
-                    id: 'space-sim-' + Date.now(),
-                    appMode: appMode,
-                    title: titleInput,
-                    category: category,
-                    categoryName: catNames[category] || '일반 탐사',
-                    level: level,
-                    levelName: levelNames[level],
-                    badgeColor: catBadges[category] || 'bg-sky-500/20 text-sky-300 border-sky-400',
-                    icon: appMode === 'arcade' ? 'fa-solid fa-space-shuttle text-rose-400' : 'fa-solid fa-globe text-sky-400',
-                    description: desc,
-                    formula: formula,
-                    code: code,
-                    guideList: ['신규 등록된 우주 탐방 미션입니다. 조종석에서 대원 가이드를 확인해보세요.']
-                };
+                saveToLocalStorage();
+                renderSimulators();
+                renderAdminTable();
+                updateStats();
             }
 
-            if (!targetSim) return;
-
-            if (db) {
-                window.firebaseImports.setDoc(window.firebaseImports.doc(db, "simulators", targetSim.id), targetSim)
-                    .then(() => {
-                        closeAddEditSimModal();
-                    })
-                    .catch((error) => {
-                        console.error("DB 저장 에러:", error);
-                        saveToLocalFallback(targetSim, editId);
-                    });
-            } else {
-                saveToLocalFallback(targetSim, editId);
-            }
-        }
-
-        function saveToLocalFallback(targetSim, editId) {
-            if (!editId) {
-                simulators.push(targetSim);
-            }
-            localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
             closeAddEditSimModal();
-            if (!document.getElementById('manager-modal').classList.contains('hidden')) {
-                renderManagerTable();
-            }
-            renderSimulators();
         }
 
-        function deleteSimulatorFromManager(id) {
-            if (confirm('이 미션을 우주 지도에서 정말 삭제하시겠습니까?')) {
-                if (db) {
-                    window.firebaseImports.deleteDoc(window.firebaseImports.doc(db, "simulators", id))
-                        .then(() => {})
-                        .catch((error) => {
-                            simulators = simulators.filter(s => s.id !== id);
-                            localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
-                            renderManagerTable();
-                            renderSimulators();
-                        });
+        function deleteSimulator(id) {
+            if (confirm('이 탐사 미션을 삭제하시겠습니까?')) {
+                if (isFirebaseOnline && db) {
+                    db.collection("simulators").doc(id).delete().then(() => {
+                        alert("✅ 파이어베이스 DB에서 삭제되었습니다.");
+                    });
                 } else {
                     simulators = simulators.filter(s => s.id !== id);
-                    localStorage.setItem('thss_all_sims', JSON.stringify(simulators));
-                    renderManagerTable();
+                    saveToLocalStorage();
                     renderSimulators();
+                    renderAdminTable();
+                    updateStats();
                 }
             }
         }
 
-        function setAppMode(mode) {
-            currentAppMode = mode;
-            const btnLab = document.getElementById('btn-mode-lab');
-            const btnArcade = document.getElementById('btn-mode-arcade');
-
-            if (mode === 'lab') {
-                btnLab.className = "flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-2 border-sky-400 bg-sky-600 text-white shadow-[4px_4px_0px_#000] translate-x-[-2px] translate-y-[-2px]";
-                btnArcade.className = "flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-500 hover:text-amber-300 bg-transparent";
-            } else {
-                btnArcade.className = "flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-2 border-rose-400 bg-rose-600 text-white shadow-[4px_4px_0px_#000] translate-x-[-2px] translate-y-[-2px]";
-                btnLab.className = "flex-1 py-3 text-sm md:text-base font-bold transition pixel-btn border-none shadow-none text-slate-500 hover:text-amber-300 bg-transparent";
-            }
-
-            renderSimulators();
-        }
-
-        function filterCategory(cat) {
-            currentCategory = cat;
-            document.querySelectorAll('.cat-pill').forEach(btn => {
-                if (btn.dataset.cat === cat) {
-                    btn.className = 'cat-pill active px-3.5 py-2 text-xs font-bold bg-sky-500 text-slate-950 border-2 border-sky-300 pixel-btn whitespace-nowrap';
+        function resetDefaultSimulators() {
+            if (confirm('모든 미션을 기본 상태로 초기화하시겠습니까?')) {
+                if (isFirebaseOnline && db) {
+                    // Reset Firestore documents
+                    db.collection("simulators").get().then((querySnapshot) => {
+                        querySnapshot.forEach((doc) => {
+                            doc.ref.delete();
+                        });
+                        defaultSimulators.forEach(sim => {
+                            db.collection("simulators").doc(sim.id).set(sim);
+                        });
+                        alert("✅ 파이어베이스 DB가 기본 미션으로 초기화되었습니다.");
+                    });
                 } else {
-                    btn.className = 'cat-pill px-3.5 py-2 text-xs font-bold bg-slate-900 text-slate-300 hover:text-amber-300 border-2 border-slate-700 pixel-btn whitespace-nowrap';
+                    simulators = [...defaultSimulators];
+                    saveToLocalStorage();
+                    renderSimulators();
+                    renderAdminTable();
+                    updateStats();
                 }
-            });
-            renderSimulators();
-        }
-
-        function applyFilters() {
-            currentLevel = document.getElementById('level-filter').value;
-            renderSimulators();
-        }
-
-        function handleSearch(val) {
-            searchQuery = val.trim();
-            renderSimulators();
-        }
-
-        function toggleFavorite(e, id) {
-            e.stopPropagation();
-            if (favorites.includes(id)) {
-                favorites = favorites.filter(f => f !== id);
-            } else {
-                favorites.push(id);
-            }
-            localStorage.setItem('thss_favorites', JSON.stringify(favorites));
-            updateFavBadge();
-            renderSimulators();
-        }
-
-        function updateFavBadge() {
-            const badge = document.getElementById('fav-badge');
-            if (favorites.length > 0) {
-                badge.textContent = favorites.length;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-
-        function toggleFavoritesTab() {
-            const btn = document.getElementById('btn-fav-toggle');
-            if (currentCategory === 'favs') {
-                filterCategory('all');
-                btn.classList.remove('border-amber-400', 'text-amber-300');
-            } else {
-                currentCategory = 'favs';
-                btn.classList.add('border-amber-400', 'text-amber-300');
-                renderSimulators();
-            }
-        }
-
-        function renderSimulators() {
-            const grid = document.getElementById('simulator-grid');
-            const emptyState = document.getElementById('empty-state');
-            if (!grid) return;
-            grid.innerHTML = '';
-
-            let safeSims = Array.isArray(simulators) ? simulators : defaultSimulators;
-
-            let filtered = safeSims.filter(s => {
-                const matchMode = (currentCategory === 'favs') ? true : (s.appMode === currentAppMode);
-                const matchCat = (currentCategory === 'all' || currentCategory === 'favs' || s.category === currentCategory);
-                const matchLevel = (currentLevel === 'all' || s.level === currentLevel);
-                const matchSearch = searchQuery === '' || 
-                    s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    s.description.toLowerCase().includes(searchQuery.toLowerCase());
-                
-                return matchMode && matchCat && matchLevel && matchSearch;
-            });
-
-            if (currentCategory === 'favs') {
-                filtered = filtered.filter(s => favorites.includes(s.id));
-                document.getElementById('empty-state-title').textContent = "즐겨찾기한 별/미션이 없습니다";
-            } else {
-                document.getElementById('empty-state-title').textContent = "해당하는 우주 미션이 없습니다";
-            }
-
-            const statCountSim = document.getElementById('stat-count-sim');
-            if (statCountSim) {
-                statCountSim.textContent = safeSims.filter(s => s.appMode === currentAppMode).length;
-            }
-
-            if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                filtered.forEach(sim => {
-                    const isFav = favorites.includes(sim.id);
-                    const card = document.createElement('div');
-                    card.className = 'space-card rounded-none p-5 flex flex-col justify-between relative group';
-                    
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="text-[11px] font-bold px-2.5 py-1 rounded-none border ${sim.badgeColor || 'bg-sky-500/20 text-sky-300 border-sky-400'} flex items-center gap-1.5 shadow-[1px_1px_0px_#000]">
-                                    <i class="${sim.icon || 'fa-solid fa-globe'}"></i> ${sim.categoryName || '우주 탐사'}
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[10px] text-slate-300 font-bold bg-slate-900 border border-slate-700 px-2 py-0.5">${sim.levelName || '일반'}</span>
-                                    <button onclick="toggleFavorite(event, '${sim.id}')" class="text-slate-500 hover:text-amber-300 transition p-1" title="즐겨찾기">
-                                        <i class="${isFav ? 'fa-solid text-amber-300' : 'fa-regular'} fa-star text-sm"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition line-clamp-1 mb-2">
-                                ${sim.title}
-                            </h3>
-                            <p class="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-4">
-                                ${sim.description}
-                            </p>
-                        </div>
-
-                        <div>
-                            ${sim.formula ? `
-                                <div class="text-[11px] font-mono bg-slate-950 border border-slate-800 px-2.5 py-1.5 text-sky-300 mb-4 truncate">
-                                    <i class="fa-solid fa-square-root-variable text-amber-300 mr-1"></i> ${sim.formula}
-                                </div>
-                            ` : ''}
-                            <button onclick="launchWorkspace('${sim.id}')" class="w-full py-2 ${sim.appMode === 'arcade' ? 'bg-rose-500 hover:bg-rose-400 border-rose-300' : 'bg-sky-500 hover:bg-sky-400 border-sky-300'} text-slate-950 font-bold text-xs border-2 pixel-btn shadow-[3px_3px_0px_#000] flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-rocket text-xs"></i> ${sim.appMode === 'arcade' ? 'GAME START' : 'PLANET EXPLORE'}
-                            </button>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            }
-        }
-
-        function toggleWSGuidePanel() {
-            const panel = document.getElementById('ws-side-panel');
-            if (panel) panel.classList.toggle('hidden');
-        }
-
-        function launchWorkspace(simId) {
-            const sim = simulators.find(s => s.id === simId);
-            if (!sim) return;
-
-            document.getElementById('ws-title').textContent = sim.title;
-            document.getElementById('ws-category-badge').textContent = sim.categoryName;
-            document.getElementById('ws-description').textContent = sim.description;
-            document.getElementById('ws-formula').textContent = sim.formula || 'N/A';
-
-            const guideListElem = document.getElementById('ws-guide-list');
-            guideListElem.innerHTML = '';
-            if (sim.guideList && sim.guideList.length > 0) {
-                sim.guideList.forEach(g => {
-                    const li = document.createElement('li');
-                    li.textContent = g;
-                    guideListElem.appendChild(li);
-                });
-            } else {
-                guideListElem.innerHTML = '<li>우주 대원 가이드에 따라 미션을 수행하세요.</li>';
-            }
-
-            const panel = document.getElementById('ws-side-panel');
-            if (panel) panel.classList.remove('hidden');
-
-            const iframe = document.getElementById('ws-iframe');
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-            doc.open();
-            doc.write(sim.code);
-            doc.close();
-
-            document.getElementById('workspace-overlay').classList.remove('hidden');
-        }
-
-        function closeWorkspace() {
-            document.getElementById('workspace-overlay').classList.add('hidden');
-            const iframe = document.getElementById('ws-iframe');
-            iframe.src = 'about:blank';
-        }
-
-        function toggleWSFullscreen() {
-            const elem = document.getElementById('workspace-overlay');
-            if (!document.fullscreenElement) {
-                elem.requestFullscreen().catch(err => console.log(err));
-            } else {
-                document.exitFullscreen();
             }
         }
 
