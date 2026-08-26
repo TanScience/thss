@@ -290,6 +290,26 @@
                 </button>
             </div>
 
+            <!-- Admin Password Change Section -->
+            <div class="p-3 bg-slate-950 border-2 border-amber-500/40 rounded space-y-2 text-xs">
+                <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-key"></i> 🔐 사령관 암호 변경
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-slate-400">새 암호 입력</label>
+                        <input type="password" id="input-new-pass" placeholder="새 암호 입력" class="w-full px-2 py-1 bg-slate-900 border border-slate-700 text-amber-200 text-xs mt-0.5">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400">새 암호 확인</label>
+                        <input type="password" id="input-confirm-pass" placeholder="새 암호 재입력" class="w-full px-2 py-1 bg-slate-900 border border-slate-700 text-amber-200 text-xs mt-0.5">
+                    </div>
+                </div>
+                <button onclick="changeAdminPassword()" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] pixel-btn">
+                    암호 변경 적용하기
+                </button>
+            </div>
+
             <div class="flex justify-between items-center pt-2">
                 <button onclick="openAddEditSimModal(false)" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold border-2 border-emerald-300 pixel-btn flex items-center gap-1.5">
                     <i class="fa-solid fa-plus"></i> 새 미션 추가
@@ -401,7 +421,7 @@
         // 🔥 1. 구글 파이어베이스(Firebase) DB 키 연동 설정 구문 (여기 작성하세요!)
         // =========================================================================
         // 파이어베이스 콘솔(console.firebase.google.com)에서 발급받은 키를 아래 "" 큰따옴표 안에 입력하세요!
-       const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyCIVdzSumEKJr57nIBr7vK0tVEuTRbZHTw",
   authDomain: "thss-portal.firebaseapp.com",
   projectId: "thss-portal",
@@ -594,6 +614,9 @@
         let activeAppMode = 'lab';
         let activeCategory = 'all';
 
+        // Stored Admin Password (Default: 1234)
+        let adminPassword = localStorage.getItem('thss_admin_pass') || '1234';
+
         function initApp() {
             createStarryBackground();
 
@@ -767,12 +790,32 @@
 
         function verifyAdminPass() {
             const pass = document.getElementById('admin-pass-input').value;
-            if (pass === '1234' || pass === 'admin') {
+            if (pass === adminPassword) {
                 closeAdminAuthModal();
                 openAdminPanelModal();
             } else {
-                alert('사령관 암호가 일치하지 않습니다. (기본: 1234)');
+                alert('사령관 암호가 일치하지 않습니다.');
             }
+        }
+
+        function changeAdminPassword() {
+            const newPass = document.getElementById('input-new-pass').value.trim();
+            const confirmPass = document.getElementById('input-confirm-pass').value.trim();
+
+            if (!newPass) {
+                alert('새 암호를 입력해 주세요.');
+                return;
+            }
+            if (newPass !== confirmPass) {
+                alert('입력하신 두 암호가 일치하지 않습니다.');
+                return;
+            }
+
+            adminPassword = newPass;
+            localStorage.setItem('thss_admin_pass', newPass);
+            document.getElementById('input-new-pass').value = '';
+            document.getElementById('input-confirm-pass').value = '';
+            alert('✅ 사령관 암호가 성공적으로 변경되었습니다!');
         }
 
         function openAdminPanelModal() {
