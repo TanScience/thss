@@ -199,24 +199,29 @@
 
     <!-- Cockpit Interactive Mission Runner Panel -->
     <main id="cockpit-runner-view" class="hidden flex-1 flex flex-col space-y-3">
-        <div class="flex items-center justify-between bg-slate-900 p-2 border-2 border-slate-700 rounded text-xs">
-            <button onclick="closeCockpit()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold border border-amber-400 pixel-btn flex items-center gap-1">
-                <i class="fa-solid fa-arrow-left"></i> 포털로 귀환
-            </button>
-            <span id="cockpit-title" class="font-bold text-sky-300">미션 조종석 실행 중...</span>
-            <button onclick="reloadCockpitIframe()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600">
+        <div class="flex items-center justify-between bg-slate-900 p-2 border-2 border-slate-700 rounded text-xs flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+                <button onclick="closeCockpit()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold border border-amber-400 pixel-btn flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> 포털로 귀환
+                </button>
+                <button onclick="toggleBriefingPanel()" id="btn-toggle-briefing" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold border border-sky-400 pixel-btn flex items-center gap-1">
+                    <i class="fa-solid fa-bars-staggered"></i> <span id="lbl-briefing-toggle">가이드 패널 닫기</span>
+                </button>
+            </div>
+            <span id="cockpit-title" class="font-bold text-sky-300 text-sm md:text-base">미션 조종석 실행 중...</span>
+            <button onclick="reloadCockpitIframe()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-600 flex items-center gap-1">
                 <i class="fa-solid fa-rotate-right"></i> 재로드
             </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-[550px]">
-            <!-- Main Canvas View (9 Cols) -->
-            <div class="lg:col-span-9 bg-slate-950 border-2 border-slate-800 rounded overflow-hidden flex flex-col">
-                <iframe id="cockpit-frame" class="w-full flex-1 border-none bg-slate-950" title="Simulator Workspace"></iframe>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 h-[calc(100vh-140px)] min-h-[580px]">
+            <!-- Main Canvas View -->
+            <div id="cockpit-canvas-container" class="lg:col-span-9 bg-slate-950 border-2 border-slate-800 rounded overflow-hidden flex flex-col h-full transition-all duration-300">
+                <iframe id="cockpit-frame" class="w-full h-full flex-1 border-none bg-slate-950" title="Simulator Workspace"></iframe>
             </div>
 
-            <!-- Briefing Panel (3 Cols) -->
-            <div class="lg:col-span-3 pixel-card p-3 space-y-3 flex flex-col justify-between text-xs">
+            <!-- Briefing Panel -->
+            <div id="cockpit-briefing-panel" class="lg:col-span-3 pixel-card p-3 space-y-3 flex flex-col justify-between text-xs h-full overflow-y-auto">
                 <div class="space-y-3">
                     <div class="border-b border-slate-800 pb-2">
                         <span id="cockpit-badge" class="px-2 py-0.5 font-bold text-[10px] bg-sky-500/20 text-sky-300 border border-sky-400">구조와 상호작용</span>
@@ -613,6 +618,7 @@
         let simulators = [];
         let activeAppMode = 'lab';
         let activeCategory = 'all';
+        let isBriefingOpen = true;
 
         // Stored Admin Password (Default: 1234)
         let adminPassword = localStorage.getItem('thss_admin_pass') || '1234';
@@ -757,6 +763,23 @@
 
             const frame = document.getElementById('cockpit-frame');
             frame.srcdoc = sim.code;
+        }
+
+        function toggleBriefingPanel() {
+            isBriefingOpen = !isBriefingOpen;
+            const panel = document.getElementById('cockpit-briefing-panel');
+            const mainCanvas = document.getElementById('cockpit-canvas-container');
+            const toggleBtnLbl = document.getElementById('lbl-briefing-toggle');
+
+            if (isBriefingOpen) {
+                panel.classList.remove('hidden');
+                mainCanvas.className = "lg:col-span-9 bg-slate-950 border-2 border-slate-800 rounded overflow-hidden flex flex-col h-full transition-all duration-300";
+                if (toggleBtnLbl) toggleBtnLbl.textContent = "가이드 패널 닫기";
+            } else {
+                panel.classList.add('hidden');
+                mainCanvas.className = "lg:col-span-12 bg-slate-950 border-2 border-slate-800 rounded overflow-hidden flex flex-col h-full transition-all duration-300";
+                if (toggleBtnLbl) toggleBtnLbl.textContent = "가이드 패널 열기";
+            }
         }
 
         function closeCockpit() {
